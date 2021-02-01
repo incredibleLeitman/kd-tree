@@ -1,3 +1,9 @@
+# vs project files
 *.vs
 *Debug
 *Release
+*enc_temp_folder
+
+# gcc build files
+*.o
+kdtree
