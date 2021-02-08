@@ -16,6 +16,11 @@
 // - fill kdtree with 3d points or triangles?
 // - better replace enum with int -> easier iteration, stringification and extension
 
+// TODO:
+// - outsource enums, structs and classes into own files
+// - using references from lists --> better arrays
+// - use float array for point
+
 #define SEPERATE_MIN_MAX
 //#define DEBUG_OUTPUT
 
@@ -35,6 +40,7 @@ struct Point
     float x;
     float y;
     float z;
+    //float coords[3];
 
     Point (float i_x, float i_y, float i_z) : x(i_x), y(i_y), z(i_z)
     {
