@@ -1,10 +1,18 @@
 #include "kdtree.h"
+#ifdef _WIN32 // vis only supported on windows
+	#include "vis.h"
+#endif
 
 #include <iostream>
 
-int main()
+int main(int argc, char* argv[])
 {
-    std::cout << "kd-tree\n";
+    std::cout << "ALGO assignment \"kd-tree\"\n";
+
+	// TODO:
+	// evaluate params
+	// -p, performance
+	// -f, filename
 
 	// test values
 	std::vector<Point*> points
@@ -18,6 +26,12 @@ int main()
 	};
 
 	//KDTree *tree = new KDTree(points);
-	//KDTree tree = KDTree(points);
 	KDTree tree(points);
+
+	#ifdef _WIN32
+		Vis vis(tree);
+		vis.display();
+	#else
+		std::cout << "visualization not supported in non-windows systems" << std::endl;
+	#endif
 }

@@ -1,6 +1,9 @@
 # kd-tree
 Assignment for ALGO (algorithms and datastructures) @FHTechnikumWien
 
+## dependencies
+- glfw3, glm, glad, khr: used for openGL visualization
+
 ## references
 - Dissertation thesis Heuristic Ray Shooting Algorithms - Vlastimil Havran
 - Fast kd-Tree Construction for 3D-rendering Algorithms like Ray Tracing - Sajid Hussain and Håkan Grahn 

@@ -4,8 +4,6 @@
 #include <chrono>
 #include <iostream>
 
-//#define DEBUG_OUTPUT
-
 auto axis_comparator (Axis axis)
 {
     return [axis](Point* p1, Point* p2) {
@@ -54,21 +52,26 @@ Node * KDTree::build (std::vector<Point*> points)
     static const Axis Dimensions[] = { X, Y, Z };
     for (Axis cand_axis : Dimensions)
     {
-        /*
         // TODO: compare min / max seperate agains minmax
-        Point* min = *std::min_element(points.begin(), points.end(), axis_comparator(cand_axis));
-        Point* max = *std::max_element(points.begin(), points.end(), axis_comparator(cand_axis));
-        std::cout << "min: " << min->dim(cand_axis) << ", max: " << max->dim(cand_axis) << '\n';
-        */
-
-        //const auto minmax = std::minmax_element(begin(points), end(points), axis_comparator(cand_axis));
-        const auto minmax = std::minmax_element(points.begin(), points.end(), axis_comparator(cand_axis));
-        float extent = (*minmax.second)->dim(cand_axis) - (*minmax.first)->dim(cand_axis);
-#ifdef DEBUG_OUTPUT
-        std::cout << "min: " << (*minmax.first._Ptr)->dim(cand_axis) <<
-            ", max: " << (*minmax.second._Ptr)->dim(cand_axis) <<
-            " -> extent: " << extent << " for axis " << axis << std::endl;
-#endif
+        #ifdef SEPERATE_MIN_MAX
+            Point* min = *std::min_element(points.begin(), points.end(), axis_comparator(cand_axis));
+            Point* max = *std::max_element(points.begin(), points.end(), axis_comparator(cand_axis));
+            float extent = max->dim(cand_axis) - min->dim(cand_axis);
+            #ifdef DEBUG_OUTPUT
+                std::cout << "min: " << min->dim(cand_axis) <<
+                    ", max: " << max->dim(cand_axis) <<
+                    " -> extent: " << extent << " for axis " << axis << std::endl;
+            #endif
+        #else
+            //const auto minmax = std::minmax_element(begin(points), end(points), axis_comparator(cand_axis));
+            const auto minmax = std::minmax_element(points.begin(), points.end(), axis_comparator(cand_axis));
+            float extent = (*minmax.second)->dim(cand_axis) - (*minmax.first)->dim(cand_axis);
+            #ifdef DEBUG_OUTPUT
+                std::cout << "min: " << (*minmax.first._Ptr)->dim(cand_axis) <<
+                    ", max: " << (*minmax.second._Ptr)->dim(cand_axis) <<
+                    " -> extent: " << extent << " for axis " << axis << std::endl;
+            #endif
+        #endif
 
         if (extent > max_extent)
         {
@@ -78,7 +81,7 @@ Node * KDTree::build (std::vector<Point*> points)
     }
 
     // choose the median as pivot and sort by splitting axis
-    int pivot = points.size() / 2;
+    size_t pivot = points.size() / 2;
     std::nth_element(points.begin(), points.begin() + pivot, points.end(), axis_comparator(axis));
 
     std::vector<Point*> right(points.begin() + pivot + 1, points.end());

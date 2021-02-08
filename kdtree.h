@@ -16,6 +16,9 @@
 // - fill kdtree with 3d points or triangles?
 // - better replace enum with int -> easier iteration, stringification and extension
 
+#define SEPERATE_MIN_MAX
+//#define DEBUG_OUTPUT
+
 enum Axis
 {
     X,
