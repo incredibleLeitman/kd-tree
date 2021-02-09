@@ -63,25 +63,26 @@ int Vis::createWindow ()
 	//
 	// 1. use static callback
 	//glfwSetFramebufferSizeCallback(_window, &Vis::framebuffer_size_callback);
-	//		--> drawback: cannot access member variables
+	//	--> drawback: cannot access member variables
 	// --------------------------------------------------------------------------------------------------------
 	// 2. declare lambda function and bound to callback, providing the implementations:
-	//glfwSetFramebufferSizeCallback(_window, [](GLFWwindow* window, int width, int height)
-	//{
-	//	glViewport(0, 0, width, height);
-	//});
-	//		--> can be a lot of code thus not nice encapsulated
+	// glfw: whenever the window size changed (by OS or user resize) this callback function executes
+	glfwSetFramebufferSizeCallback(_window, [](GLFWwindow* window, int width, int height)
+	{
+		glViewport(0, 0, width, height);
+	});
+	//	--> can be a lot of code thus not nice encapsulated
 	// --------------------------------------------------------------------------------------------------------
 	// 3. declare lamda function and delegate to implementation
 	glfwSetWindowUserPointer(_window, this); // set window handle to this
-	auto func = [](GLFWwindow* window, int width, int height)
-	{
-		static_cast<Vis*>(glfwGetWindowUserPointer(window))->framebuffer_size_callback(window, width, height);
-	};
-	glfwSetFramebufferSizeCallback(_window, func);
 
-	glfwSetCursorPosCallback(_window, &Vis::mouse_callback);
-	glfwSetScrollCallback(_window, &Vis::scroll_callback);
+	auto mouseCallback = [](GLFWwindow* window, double xpos, double ypos)
+	{
+		static_cast<Vis*>(glfwGetWindowUserPointer(window))->mouse_callback(window, xpos, ypos);
+	};
+	glfwSetCursorPosCallback(_window, mouseCallback);
+
+	//glfwSetScrollCallback(_window, &Vis::scroll_callback);
 
 	auto keyCallback = [](GLFWwindow* window, int key, int scancode, int action, int mods)
 	{
@@ -133,16 +134,6 @@ int Vis::exitWithError(std::string code)
 {
 	std::cout << "error: " << code << std::endl;
 	return EXIT_FAILURE;
-}
-
-// glfw: whenever the window size changed (by OS or user resize) this callback function executes
-// ---------------------------------------------------------------------------------------------
-void Vis::framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-    // make sure the viewport matches the new window dimensions; note that width and
-    // height will be significantly larger than specified on retina displays.
-    //std::cout << "framebuffer callback for " << width << ", " << height << std::endl;
-    glViewport(0, 0, width, height);
 }
 
 // glfw: whenever the mouse moves, this callback is called

@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
 		//else if (strcmp(argv[i], "--runs") == 0) runs = std::stoi(argv[i + 1]);
 	}
 
-	std::vector<Point*> points;
+	/*std::vector<Point*> points;
 	if (fileRnd.empty() == false) // read random points from given file
 	{
 		std::cout << "reading random numbers from file: " << fileRnd << "..." << std::endl;
@@ -39,22 +39,23 @@ int main(int argc, char* argv[])
 	else // generate random points
 	{
 		std::cout << "generating " << count << " random numbers" << std::endl;
-		points = PointGenerator::generate_points(count, 0.0, 1000.0);
+		//points = PointGenerator::generate_points(count, 0.0, 1000.0);
+	}*/
 
-		// test values
-		/*std::vector<Point*> points
-		{
-			new Point(0.0f, 0.0f, 0.0f),
-			new Point(2.0f, 0.0f, 0.0f),
-			new Point(1.0f, 2.0f, 0.0f),
-			new Point(2.0f, 0.0f, 0.0f),
-			new Point(3.5f, 1.0f, 0.0f),
-			new Point(2.5f, 3.0f, 0.0f)
-		};*/
-	}
+	// test values
+	std::vector<Point*> points
+	{
+		new Point(0.0f, 0.0f, 0.0f),
+		new Point(2.0f, 0.0f, 0.0f),
+		new Point(1.0f, 2.0f, 0.0f),
+		new Point(2.0f, 0.0f, 0.0f),
+		new Point(3.5f, 1.0f, 0.0f),
+		new Point(2.5f, 3.0f, 0.0f)
+	};
 
 	//KDTree *tree = new KDTree(points);
 	KDTree tree(points);
+	tree.print();
 
 	if (vis)
 	{
