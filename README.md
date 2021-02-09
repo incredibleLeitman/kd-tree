@@ -2,7 +2,11 @@
 Assignment for ALGO (algorithms and datastructures) @FHTechnikumWien
 
 ## dependencies
-- glfw3, glm, glad, khr: used for openGL visualization
+- glfw3 https://github.com/glfw/glfw
+- glad https://glad.dav1d.de/
+- khr https://www.khronos.org/registry/EGL/api/KHR/khrplatform.h
+- glm https://github.com/g-truc/glm
+- OBJ_Loader.h https://github.com/Bly7/OBJ-Loader/blob/master/Source/OBJ_Loader.h
 
 ## references
 - Dissertation thesis Heuristic Ray Shooting Algorithms - Vlastimil Havran
