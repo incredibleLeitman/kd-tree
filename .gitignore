@@ -4,6 +4,11 @@
 *Release
 *enc_temp_folder
 
+# dependencies
+*libs
+*includes
+glad.c
+
 # gcc build files
 *.o
 kdtree
