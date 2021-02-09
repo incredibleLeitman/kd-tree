@@ -84,6 +84,7 @@ Node * KDTree::build (std::vector<Point*> &points, uint32_t depth)
 
     // select splitting axis by choosing max extent
     Axis axis = Axis::X;
+    float extension[3];
     float max_extent = 0.0f;
     for (Axis cand : Dimensions)
     {
@@ -108,6 +109,7 @@ Node * KDTree::build (std::vector<Point*> &points, uint32_t depth)
             #endif
         #endif
 
+        extension[(int)cand] = (extent == 0) ? MAX_DIM : extent;
         if (extent > max_extent)
         {
             max_extent = extent;
@@ -125,5 +127,5 @@ Node * KDTree::build (std::vector<Point*> &points, uint32_t depth)
     //std::vector<Point*> left(points.begin(), points.begin() + pivot);
     points.resize(pivot);
 
-    return new Node(axis, median, build(points, depth + 1), build(right, depth + 1));
+    return new Node(axis, extension, median, build(points, depth + 1), build(right, depth + 1));
 }

@@ -196,6 +196,7 @@ void Vis::display ()
 		
 		if (_showGrid)
 		{
+			std::cout << "----------------------------------------------------" << std::endl;
 			_shader->setVec3("color", glm::vec3(0.0f, 0.0f, 1.0f));
 
 			glBindVertexArray(VAOCube);
@@ -235,18 +236,8 @@ void Vis::display ()
 				//model = glm::translate(model, glm::vec3(xMax, yMax, zMax));
 				model = glm::translate(model, cur->pt->toVec3());
 				//model = glm::scale(model, glm::vec3(xMax - xMin, yMax - yMin, zMax - zMin));
-				if (cur->axis == Axis::X)
-				{ 
-					model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1, 0, 0));
-				}
-				else if (cur->axis == Axis::Y)
-				{
-					model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0, 1, 0));
-				}
-				else if (cur->axis == Axis::Z)
-				{
-					model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0, 0, 1));
-				}
+				model = glm::scale(model, cur->extent->toVec3());
+				model = glm::rotate(model, glm::radians(90.0f), AxisToVec3(cur->axis));
 
 				_shader->setMat4("model", model);
 				//glDrawArrays(GL_LINE_STRIP, 0, 16);

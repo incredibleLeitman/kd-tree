@@ -51,6 +51,7 @@ int main(int argc, char* argv[])
 		 0.5f, -5.5f, 0.0f, // right
 		 0.0f, -4.5f, 0.0f, // top
 
+		 /*
 		 - 0.5f, 5.5f, 0.0f, // left
 		 0.5f, 5.5f, 0.0f, // right
 		 0.0f, 6.5f, 0.0f, // top
@@ -62,8 +63,10 @@ int main(int argc, char* argv[])
 		 -5.5f, -5.5f, 0.0f, // left
 		 -4.5f, -5.5f, 0.0f, // right
 		 -5.0f, -4.5f, 0.0f // top
+		 */
+
 	};
-	uint32_t countValues = 45;
+	uint32_t countValues = 18; //45;
 
 	//KDTree *tree = new KDTree(points);
 	//KDTree tree(points);

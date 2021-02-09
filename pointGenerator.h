@@ -49,7 +49,7 @@ public:
         return points;
     }
 
-    static std::vector<Point*> generate_points (const int count, const float min = 0.0, const float max = 1000.0)
+    static std::vector<Point*> generate_points (const int count, const float min = 0.0, const float max = MAX_DIM)
     {
         std::vector<Point*> points;
 
