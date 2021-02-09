@@ -5,10 +5,12 @@
 
 // #define GLFW_INCLUDE_NONE before including GLFW, or include glad bfore including glfw.
 #include <GLFW/glfw3.h>
+#include <stack>
 
 float lastX, lastY = 0;
 
-Vis::Vis (KDTree &tree) : _tree(tree), _showGrid(false)
+Vis::Vis (KDTree &tree, float* vertices, uint32_t countVertices)
+	: _tree(tree), _vertices(vertices), _countVertices(countVertices), _showGrid(false)
 {
 	init();
 }
@@ -37,6 +39,26 @@ int Vis::init ()
 
 	// init camera to be able to move around the scene
 	_cam = new Camera(glm::vec3(0.0f, 0.0f, 3.0f));
+
+	// set up vertex data (and buffer(s)) and configure vertex attributes
+	// ------------------------------------------------------------------
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	glBindVertexArray(VAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * _countVertices, _vertices, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	// unbind the VAO so other VAO calls won't accidentally modify this VAO
+	glBindVertexArray(0);
+
+	// uncomment this call to draw in wireframe polygons
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	return 0;
 }
@@ -80,59 +102,26 @@ int Vis::createWindow ()
 	// 3. declare lamda function and delegate to implementation
 	glfwSetWindowUserPointer(_window, this); // set window handle to this
 
-	auto mouseCallback = [](GLFWwindow* window, double xpos, double ypos)
+	glfwSetCursorPosCallback(_window, [](GLFWwindow* window, double xpos, double ypos)
 	{
 		static_cast<Vis*>(glfwGetWindowUserPointer(window))->mouse_callback(window, xpos, ypos);
-	};
-	glfwSetCursorPosCallback(_window, mouseCallback);
+	});
 
-	//glfwSetScrollCallback(_window, &Vis::scroll_callback);
+	glfwSetScrollCallback(_window, [](GLFWwindow* window, double xoffset, double yoffset)
+	{
+		static_cast<Vis*>(glfwGetWindowUserPointer(window))->scroll_callback(window, xoffset, yoffset);
+	});
 
-	auto keyCallback = [](GLFWwindow* window, int key, int scancode, int action, int mods)
+	glfwSetKeyCallback(_window, [](GLFWwindow* window, int key, int scancode, int action, int mods)
 	{
 		static_cast<Vis*>(glfwGetWindowUserPointer(window))->key_callback(window, key, scancode, action, mods);
-	};
-	glfwSetKeyCallback(_window, keyCallback);
+	});
 
 	return 0;
 }
 
 void Vis::display ()
 {
-	// set up vertex data (and buffer(s)) and configure vertex attributes
-	// ------------------------------------------------------------------
-	float vertices[] = {
-		-0.5f, -0.5f, 0.0f, // left
-		 0.5f, -0.5f, 0.0f, // right
-		 0.0f,  0.5f, 0.0f, // top
-
-		 -0.5f, -5.5f, 0.0f, // left
-		 0.5f, -5.5f, 0.0f, // right
-		 0.0f, -4.5f, 0.0f  // top
-	};
-
-	unsigned int VBO, VAO;
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	// bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-	glBindVertexArray(VAO);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-
-	// note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	// You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-	// VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-	glBindVertexArray(0);
-
-	// uncomment this call to draw in wireframe polygons.
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
 	// Loop until the user closes the window
 	while (!glfwWindowShouldClose(_window))
 	{
@@ -145,13 +134,11 @@ void Vis::display ()
 
 		// render scene
 		// ------------------------------------------------------------
-		if (_showGrid)
-			glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		else
-			glClearColor(.0f, .0f, .0f, 1.0f);
+		glClearColor(.0f, .0f, .0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		_shader->use();
+		_shader->setVec3("color", glm::vec3(1.0f, 1.0f, 1.0f));
 
 		// pass projection matrix to shader (note that in this case it could change every frame)
 		glm::mat4 projection = glm::perspective(glm::radians(_cam->Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
@@ -161,11 +148,114 @@ void Vis::display ()
 		glm::mat4 view = _cam->GetViewMatrix();
 		_shader->setMat4("view", view);
 
-		_shader->setMat4("model", glm::mat4(1.0f));
+		glm::mat4 model = glm::mat4(1.0f);
+		_shader->setMat4("model", model);
 
 		// render triangles
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glDrawArrays(GL_TRIANGLES, 0, _countVertices/3); // sides * triangles * vertices, e.g 36 for 18 values
+
+		// we configurate the cube VAO for the boxes
+		/*
+		static constexpr float boxpoints[48] = {
+		0,0,0,
+		0,0,-1,
+		-1,0,-1,
+		-1,0,0,
+		0,0,0,
+		0,-1,0,
+		0,-1,-1,
+		0,0,-1,
+		-1,0,-1,
+		-1,-1,-1,
+		0,-1,-1,
+		0,-1,0,
+		-1,-1,0,
+		-1,0,0,
+		-1,-1,0,
+		-1,-1,-1
+		};
+		*/
+
+		static constexpr float planepoints[16] = {
+			0,0,0,
+			0,1,0,
+			1,1,0,
+			1,0,0
+		};
+
+		unsigned int VAOCube, VBOCube;
+		glGenVertexArrays(1, &VAOCube);
+		glGenBuffers(1, &VBOCube);
+		glBindVertexArray(VAOCube);
+		glBindBuffer(GL_ARRAY_BUFFER, VBOCube);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(planepoints), planepoints, GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+		glBindVertexArray(0);
+		
+		if (_showGrid)
+		{
+			_shader->setVec3("color", glm::vec3(0.0f, 0.0f, 1.0f));
+
+			glBindVertexArray(VAOCube);
+
+			/*glBindVertexArray(pointVAO);
+			pointShader.use();
+			pointShader.setMat4("projection", projection);
+			pointShader.setMat4("view", view);
+			glm::mat4 model = glm::mat4(1.0f);
+			glBindVertexArray(wireCubeVAO);
+			for (auto box : tree.boxes) {
+				model = glm::mat4(1.0f);
+				box.getTransformMatrix(model);
+				pointShader.setVec3("color", glm::vec3(0.0f, 0.0f, 1.0f));
+				pointShader.setMat4("model", model);
+				glDrawArrays(GL_LINE_STRIP, 0, 16);
+			}*/
+			
+			// temp inorder non-recursive traversion of kd-tree
+			std::stack<Node*> s;
+			Node* cur = _tree.root();
+			while (cur != NULL || s.empty() == false)
+			{
+				while (cur != NULL)
+				{
+					s.push(cur);
+					cur = cur->left;
+				}
+
+				cur = s.top();
+				s.pop();
+
+				std::cout << cur->toString() << std::endl;
+
+				model = glm::mat4(1.0f);
+				// get plane transform and rotation
+				//model = glm::translate(model, glm::vec3(xMax, yMax, zMax));
+				model = glm::translate(model, cur->pt->toVec3());
+				//model = glm::scale(model, glm::vec3(xMax - xMin, yMax - yMin, zMax - zMin));
+				if (cur->axis == Axis::X)
+				{ 
+					model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1, 0, 0));
+				}
+				else if (cur->axis == Axis::Y)
+				{
+					model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0, 1, 0));
+				}
+				else if (cur->axis == Axis::Z)
+				{
+					model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0, 0, 1));
+				}
+
+				_shader->setMat4("model", model);
+				//glDrawArrays(GL_LINE_STRIP, 0, 16);
+				//glDrawArrays(GL_TRIANGLES, 0, 36);
+				glDrawArrays(GL_TRIANGLE_STRIP, 0, 36);
+
+				cur = cur->right;
+			}
+		}
 
 		glfwSwapBuffers(_window);
 		glfwPollEvents();

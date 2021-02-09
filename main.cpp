@@ -42,25 +42,38 @@ int main(int argc, char* argv[])
 		//points = PointGenerator::generate_points(count, 0.0, 1000.0);
 	}*/
 
-	// test values
-	std::vector<Point*> points
-	{
-		new Point(0.0f, 0.0f, 0.0f),
-		new Point(2.0f, 0.0f, 0.0f),
-		new Point(1.0f, 2.0f, 0.0f),
-		new Point(2.0f, 0.0f, 0.0f),
-		new Point(3.5f, 1.0f, 0.0f),
-		new Point(2.5f, 3.0f, 0.0f)
+	float vertices[] = {
+		-0.5f, -0.5f, 0.0f, // left
+		 0.5f, -0.5f, 0.0f, // right
+		 0.0f,  0.5f, 0.0f, // top
+
+		 -0.5f, -5.5f, 0.0f, // left
+		 0.5f, -5.5f, 0.0f, // right
+		 0.0f, -4.5f, 0.0f, // top
+
+		 - 0.5f, 5.5f, 0.0f, // left
+		 0.5f, 5.5f, 0.0f, // right
+		 0.0f, 6.5f, 0.0f, // top
+
+		 4.5f, -5.5f, 0.0f, // left
+		 5.5f, -5.5f, 0.0f, // right
+		 5.0f, -4.5f, 0.0f, // top
+
+		 -5.5f, -5.5f, 0.0f, // left
+		 -4.5f, -5.5f, 0.0f, // right
+		 -5.0f, -4.5f, 0.0f // top
 	};
+	uint32_t countValues = 45;
 
 	//KDTree *tree = new KDTree(points);
-	KDTree tree(points);
+	//KDTree tree(points);
+	KDTree tree(vertices, countValues);
 	tree.print();
 
 	if (vis)
 	{
 #ifdef _WIN32
-		Vis vis(tree);
+		Vis vis(tree, vertices, countValues);
 		vis.display();
 #else
 		std::cout << "visualization not supported in non-windows systems" << std::endl;

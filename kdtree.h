@@ -10,15 +10,14 @@ class KDTree
 {
 private:
     Node* _root;
-    unsigned int _depth;
+    uint32_t _depth;
 
 public:
     KDTree (std::vector<Point*> &points);
-    //KDTree (std::vector<Point*> points);
-    //KDTree (Point *points, uint32_t size);
-    //KDTree (Point points[], uint32_t size);
+    KDTree (float *vertices, uint32_t size);
 
     void print ();
+    Node* root ();
 
 //protected:
     ~KDTree ()
@@ -27,7 +26,9 @@ public:
     }
 
 private:
-    Node* build (std::vector<Point*> &points, unsigned int depth);
+    Node* build (std::vector<Point*> &points, uint32_t depth);
+    // unused: idea was to compare array vs vector but overhead for sort and comparing every third value was to much
+    //Node* build(float* points, uint32_t size, uint32_t depth);
 
     void printNode (Node* node);
 };

@@ -14,24 +14,40 @@ static auto axis_comparator(Axis axis)
 }
 
 KDTree::KDTree (std::vector<Point*> &points)
+    :_depth(0)
 {
-    _depth = 0;
     std::cout << "building kd-tree with " << points.size() << " points..." << std::endl;
     auto start = std::chrono::high_resolution_clock::now();
     _root = build(points, 0);
     std::cout << " took " << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() << " microseconds" << std::endl;
 }
 
-//KDTree::KDTree(Point* points, uint32_t size)
-/*KDTree::KDTree(Point points[], uint32_t size)
+KDTree::KDTree (float *vertices, uint32_t count)
+    :_depth(0)
 {
-
-}*/
+    std::cout << "building kd-tree with " << count << " points..." << std::endl;
+    // - conversion from float[] to vector<Point*>
+    std::vector<Point*> points(count/3);
+    for (uint32_t idx = 0; idx < count; idx += 3)
+    {
+        points[idx/3] = new Point(vertices[idx], vertices[idx + 1], vertices[idx + 2]);
+    }
+    auto start = std::chrono::high_resolution_clock::now();
+    _root = build(points, 0);
+    // - build with arrays --> too much overhead
+    //_root = build(vertices, count, 0);
+    std::cout << " took " << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() << " microseconds" << std::endl;
+}
 
 void KDTree::print ()
 {
     std::cout << "kd tree with depth: " << _depth << std::endl;
     printNode(_root);
+}
+
+Node* KDTree::root ()
+{
+    return _root;
 }
 
 void KDTree::printNode (Node* node)
@@ -50,7 +66,7 @@ void KDTree::printNode (Node* node)
     }
 }
 
-Node * KDTree::build (std::vector<Point*> &points, unsigned int depth)
+Node * KDTree::build (std::vector<Point*> &points, uint32_t depth)
 {
     // TODO:
     // - set maximum leaf node count

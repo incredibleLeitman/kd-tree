@@ -2,6 +2,8 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <string>
 
 // ----------------------------------------
@@ -65,6 +67,11 @@ public:
         return std::to_string(dim(X)) + ", " +
                std::to_string(dim(Y)) + ", " +
                std::to_string(dim(Z));
+    }
+
+    glm::vec3 toVec3 ()
+    {
+        return glm::vec3(coords[0], coords[1], coords[2]);
     }
 };
 

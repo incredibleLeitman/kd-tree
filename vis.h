@@ -23,6 +23,11 @@ private:
 	float deltaTime = 0.0f;	// time between current frame and last frame
 	float lastFrame = 0.0f;
 
+	// rendering
+	float* _vertices;
+	uint32_t _countVertices;
+	unsigned int VBO, VAO;
+
 	int exitWithError (std::string code);
 	int init ();
 	int createWindow ();
@@ -35,7 +40,7 @@ private:
 	void processInput();
 
 public:
-	Vis (KDTree &tree);
+	Vis (KDTree &tree, float *vertices, uint32_t countVertices);
 	void display();
 };
 #endif // VIS_H
