@@ -25,6 +25,8 @@
 #define DEBUG_OUTPUT            // prints debug output
 #define MAX_DEPTH 500           // sets maximum depth for kd-tree nodes
 
+const int WIDTH = 1024, HEIGHT = 800; // screen dimensions
+
 class Point;
 
 enum Axis
