@@ -7,20 +7,7 @@
 auto axis_comparator (Axis axis)
 {
     return [axis](Point* p1, Point* p2) {
-        // TODO: use points as vectors or array or different comparators for each axis
-        //return p1->pos[axis] < p2->pos[axis];
-        if (axis == Axis::X)
-        {
-            return p1->x < p2->x;
-        }
-        else if (axis == Axis::Y)
-        {
-            return p1->y < p2->y;
-        }
-        else //if (axis == Axis::Z)
-        {
-            return p1->z < p2->z;
-        }
+        return p1->dim(axis) < p2->dim(axis);
     };
 }
 

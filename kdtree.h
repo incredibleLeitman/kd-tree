@@ -37,29 +37,15 @@ enum Axis
 // stores 3d points
 struct Point
 {
-    float x;
-    float y;
-    float z;
-    //float coords[3];
+    float coords[3];
 
-    Point (float i_x, float i_y, float i_z) : x(i_x), y(i_y), z(i_z)
+    Point(float i_x, float i_y, float i_z) : coords{ i_x, i_y, i_z }
     {
     }
 
     float dim (Axis axis)
     {
-        if (axis == Axis::X)
-        {
-            return x;
-        }
-        else if (axis == Axis::Y)
-        {
-            return y;
-        }
-        else //if (axis == Axis::Z)
-        {
-            return z;
-        }
+        return coords[(int)axis];
     }
 };
 
