@@ -24,9 +24,11 @@
 // - use float array for point
 
 #define SEPERATE_MIN_MAX        // use seperate min_element/max_element instead of combined minmax_element
-#define DEBUG_OUTPUT            // prints debug output
+//#define DEBUG_OUTPUT            // prints debug output
 #define MAX_DEPTH 500           // sets maximum depth for kd-tree nodes
-#define MAX_DIM 1000            // maximum dimension for scene extent
+#define MAX_DIM 100             // maximum dimension for scene extent
+#define SAVE_TRIANGLES        // kd-tree stores the center of each triangle as point
+//#define SAVE_CORNERS            // kd-tree stores each corner point of each triangle
 
 const int WIDTH = 1024, HEIGHT = 800; // screen dimensions
 
@@ -49,7 +51,8 @@ static std::string AxisToString (const Axis axis)
 
 static glm::vec3 AxisToVec3 (const Axis axis)
 {
-    return glm::vec3(axis == Axis::X, axis == Axis::Y, axis == Axis::Z);
+    //return glm::vec3(axis == Axis::X, axis == Axis::Y, axis == Axis::Z);
+    return glm::vec3(axis == Axis::Y, axis == Axis::X, axis == Axis::Z);
 }
 
 // stores 3d points

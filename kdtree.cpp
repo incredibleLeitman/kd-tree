@@ -26,16 +26,34 @@ KDTree::KDTree (float *vertices, uint32_t count)
     :_depth(0)
 {
     std::cout << "building kd-tree with " << count << " points..." << std::endl;
-    // - conversion from float[] to vector<Point*>
+    // - variant 1: build with arrays --> too much overhead
+    //_root = build(vertices, count, 0);
+
+#if defined(SAVE_TRIANGLES)
+    // conversion from float[] to vector<Point*>
+    // add only center point of the triangle
+    std::vector<Point*> points(count / 9);
+    for (uint32_t idx = 0; idx < count; idx += 9)
+    {
+        float A[3] = { vertices[idx], vertices[idx + 1], vertices[idx + 2] };
+        float B[3] = { vertices[idx + 3], vertices[idx + 4], vertices[idx + 5] };
+        float C[3] = { vertices[idx + 6], vertices[idx + 7], vertices[idx + 8] };
+        points[idx / 9] = new Point(
+            (A[0] + B[0] + C[0]) / 3,
+            (A[1] + B[1] + C[1]) / 3,
+            (A[2] + B[2] + C[2]) / 3);
+    }
+#elif defined(SAVE_CORNERS)
+    // conversion from float[] to vector<Point*>
+    // add every single point of the triangle
     std::vector<Point*> points(count/3);
     for (uint32_t idx = 0; idx < count; idx += 3)
     {
         points[idx/3] = new Point(vertices[idx], vertices[idx + 1], vertices[idx + 2]);
     }
+#endif
     auto start = std::chrono::high_resolution_clock::now();
     _root = build(points, 0);
-    // - build with arrays --> too much overhead
-    //_root = build(vertices, count, 0);
     std::cout << " took " << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() << " microseconds" << std::endl;
 }
 
@@ -68,9 +86,20 @@ void KDTree::printNode (Node* node)
 
 Node * KDTree::build (std::vector<Point*> &points, uint32_t depth)
 {
-    // TODO:
-    // - set maximum leaf node count
-    if (points.empty() || depth > MAX_DEPTH) { return nullptr; }
+    size_t count = points.size();
+    if (count == 0 /*points.empty()*/ || depth > MAX_DEPTH)
+    { 
+        return nullptr;
+    }
+    // TODO: set maximum leaf node count
+    /*else if (count == 1)
+    {
+        return nullptr;
+
+        // adding no spliting axis or children, just adding the point
+        //float extension[3];
+        //return new Node(Axis::X, extension, points[0], nullptr, nullptr);
+    }*/
 
     if (depth > _depth) _depth = depth;
 
@@ -110,7 +139,7 @@ Node * KDTree::build (std::vector<Point*> &points, uint32_t depth)
         #endif
 
         extension[(int)cand] = (extent == 0) ? MAX_DIM : extent;
-        if (extent > max_extent)
+        if (extent >= max_extent)
         {
             max_extent = extent;
             axis = cand;
@@ -126,6 +155,13 @@ Node * KDTree::build (std::vector<Point*> &points, uint32_t depth)
     std::vector<Point*> right(points.begin() + pivot + 1, points.end());
     //std::vector<Point*> left(points.begin(), points.begin() + pivot);
     points.resize(pivot);
+
+    // update extension for resulting axis
+    extension[(int)axis] = 1;
+
+    #ifdef DEBUG_OUTPUT
+        std::cout << " -> choosing axis " << AxisToString(axis) << " with max extent: " << max_extent << std::endl;
+    #endif
 
     return new Node(axis, extension, median, build(points, depth + 1), build(right, depth + 1));
 }
