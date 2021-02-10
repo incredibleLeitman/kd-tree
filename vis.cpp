@@ -42,6 +42,7 @@ int Vis::init ()
 
 	// set up vertex data (and buffer(s)) and configure vertex attributes
 	// ------------------------------------------------------------------
+	// triangles
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 	glBindVertexArray(VAO);
@@ -52,13 +53,31 @@ int Vis::init ()
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	static constexpr float planepoints[12] =
+	{
+		0,0,0,
+		0,1,0,
+		1,1,0,
+		1,0,0
+	};
+
+	// splitting planes
+	glGenVertexArrays(1, &VAOPlane);
+	glGenBuffers(1, &VBOPlane);
+	glBindVertexArray(VAOPlane);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBOPlane);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(planepoints), planepoints, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
 
 	// unbind the VAO so other VAO calls won't accidentally modify this VAO
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
-	// uncomment this call to draw in wireframe polygons
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	// configure global opengl state
+	glEnable(GL_DEPTH_TEST);
 
 	return 0;
 }
@@ -141,7 +160,7 @@ void Vis::display ()
 		_shader->setVec3("color", glm::vec3(1.0f, 1.0f, 1.0f));
 
 		// pass projection matrix to shader (note that in this case it could change every frame)
-		glm::mat4 projection = glm::perspective(glm::radians(_cam->Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
+		glm::mat4 projection = glm::perspective(glm::radians(_cam->Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 500.0f);
 		_shader->setMat4("projection", projection);
 
 		// camera/view transformation
@@ -176,32 +195,14 @@ void Vis::display ()
 		-1,-1,-1
 		};
 		*/
-
-		static constexpr float planepoints[16] = {
-			0,0,0,
-			0,1,0,
-			1,1,0,
-			1,0,0
-		};
-
-		unsigned int VAOCube, VBOCube;
-		glGenVertexArrays(1, &VAOCube);
-		glGenBuffers(1, &VBOCube);
-		glBindVertexArray(VAOCube);
-		glBindBuffer(GL_ARRAY_BUFFER, VBOCube);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(planepoints), planepoints, GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(0);
-		glBindVertexArray(0);
 		
 		if (_showGrid)
 		{
-			std::cout << "----------------------------------------------------" << std::endl;
-			_shader->setVec3("color", glm::vec3(0.0f, 0.0f, 1.0f));
+			glBindVertexArray(VAOPlane);
 
-			glBindVertexArray(VAOCube);
-
-			/*glBindVertexArray(pointVAO);
+			/*
+			// TODO: show alternate vis with cubes
+			glBindVertexArray(pointVAO);
 			pointShader.use();
 			pointShader.setMat4("projection", projection);
 			pointShader.setMat4("view", view);
@@ -217,6 +218,7 @@ void Vis::display ()
 			
 			// temp inorder non-recursive traversion of kd-tree
 			std::stack<Node*> s;
+			uint32_t nodes = 0;
 			Node* cur = _tree.root();
 			while (cur != NULL || s.empty() == false)
 			{
@@ -229,15 +231,32 @@ void Vis::display ()
 				cur = s.top();
 				s.pop();
 
-				std::cout << cur->toString() << std::endl;
+				// set color to R -> G -> B continously
+				int mod = nodes % 3;
+				_shader->setVec3("color", glm::vec3(mod == 0, mod == 1, mod == 2));
+				nodes = (nodes + 1) % 3;
 
-				model = glm::mat4(1.0f);
 				// get plane transform and rotation
-				//model = glm::translate(model, glm::vec3(xMax, yMax, zMax));
-				model = glm::translate(model, cur->pt->toVec3());
-				//model = glm::scale(model, glm::vec3(xMax - xMin, yMax - yMin, zMax - zMin));
+				model = glm::mat4(1.0f);
+				// move the plane on splitting axis to point, other axis to extent/2
+				glm::vec3 trans;
+				for (Axis cand : Dimensions)
+				{
+					if (cand == cur->axis) trans[(int)cand] = cur->pt->dim(cand);
+					else trans[(int)cand] = cur->pt->dim(cand) - cur->extent->dim(cand) / 2;
+				}
+				model = glm::translate(model, trans);
+				#ifdef DEBUG_OUTPUT
+					std::cout << "color: " << (mod == 0) << ", " << (mod == 1) << ", " << (mod == 2) << std::endl;
+					std::cout << "for splitting plane: " << AxisToString(cur->axis) << " on point " << cur->pt->toString() << std::endl;
+					std::cout << "with extension: " << cur->extent->toString() << std::endl;
+					std::cout << "translation vector: " << trans.x << ", " << trans.y << ", " << trans.z << std::endl;
+				#endif
 				model = glm::scale(model, cur->extent->toVec3());
-				model = glm::rotate(model, glm::radians(90.0f), AxisToVec3(cur->axis));
+				//model = glm::rotate(model, glm::radians(90.0f), AxisToVec3(cur->axis));
+				if (cur->axis == Axis::X) model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0, -1, 0));
+				else if (cur->axis == Axis::Y) model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1, 0, 0));
+				//else if (cur->axis == Axis::Z) // no need to rotate Z plane
 
 				_shader->setMat4("model", model);
 				//glDrawArrays(GL_LINE_STRIP, 0, 16);
@@ -255,6 +274,9 @@ void Vis::display ()
 	// de-allocate all resources
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
+
+	glDeleteVertexArrays(1, &VAOPlane);
+	glDeleteBuffers(1, &VBOPlane);
 
 	glfwTerminate();
 	//return EXIT_SUCCESS;
@@ -302,6 +324,8 @@ void Vis::key_callback(GLFWwindow* window, int key, int scancode, int action, in
     {
 		if (key == GLFW_KEY_G)
 			_showGrid ^= true;
+		else if (key == GLFW_KEY_P)
+			glPolygonMode(GL_FRONT_AND_BACK, (_showLines ^= true) ? GL_LINE : GL_FILL);
     }
 }
 

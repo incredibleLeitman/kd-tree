@@ -18,6 +18,7 @@ private:
 	Camera* _cam;
 
 	bool _showGrid; // toggle with key 'G' to show kd-tree cells
+	bool _showLines; // toogle between polygon fill and lines
 
 	// timing
 	float deltaTime = 0.0f;	// time between current frame and last frame
@@ -26,7 +27,8 @@ private:
 	// rendering
 	float* _vertices;
 	uint32_t _countVertices;
-	unsigned int VBO, VAO;
+	unsigned int VBO, VAO;				// vertex array and buffer for triangles
+	unsigned int VAOPlane, VBOPlane;	// vao and vbo for splitting planes
 
 	int exitWithError (std::string code);
 	int init ();
