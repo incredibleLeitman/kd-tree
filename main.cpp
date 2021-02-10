@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
 	// --rngcount <count>   generates count random float values
 	bool vis = true;
 	std::string fileRnd = "";
-	int count = 10;
+	uint32_t count = 0;
 
 	// TODO: add params:
 	// -runs <count>        runs performance mode multiple times
@@ -30,53 +30,129 @@ int main(int argc, char* argv[])
 		//else if (strcmp(argv[i], "--runs") == 0) runs = std::stoi(argv[i + 1]);
 	}
 
-	/*std::vector<Point*> points;
-	if (fileRnd.empty() == false) // read random points from given file
+	//float *vertices = nullptr;
+	uint32_t countValues = count;
+	std::vector<float> triangleVertices;
+
+	//fileRnd = "Monkey.obj";
+	//fileRnd = "MonkeySimple.obj";
+	//fileRnd = "nubian_complex.obj";
+	//fileRnd = "icosphere.obj";
+	fileRnd = "sphere.obj";
+	//fileRnd = "noobPot.obj";
+
+	if (fileRnd.empty() == false) // read points from given file
 	{
-		std::cout << "reading random numbers from file: " << fileRnd << "..." << std::endl;
-		points = PointGenerator::read_file(fileRnd);
+		std::cout << "reading vertices from file: " << fileRnd << "..." << std::endl;
+		triangleVertices = PointGenerator::read_file(fileRnd);
+		countValues = (uint32_t)triangleVertices.size();
 	}
-	else // generate random points
+	else if (count != 0) // generate random points
 	{
 		std::cout << "generating " << count << " random numbers" << std::endl;
-		//points = PointGenerator::generate_points(count, 0.0, 1000.0);
-	}*/
+		triangleVertices = PointGenerator::generate_triangles(count);
+		countValues = (uint32_t)triangleVertices.size();
+	}
+	else
+	{
+		std::cout << "using simple test setup" << std::endl;
+		float test[] =
+		{
+			/*
+			// only x-axis
+			// center
+			-0.5f, -0.5f, 0.0f,
+			 0.5f, -0.5f, 0.0f,
+			 0.0f,  0.5f, 0.0f,
 
-	float vertices[] = {
-		-0.5f, -0.5f, 0.0f, // left
-		 0.5f, -0.5f, 0.0f, // right
-		 0.0f,  0.5f, 0.0f, // top
+			 // left
+			 -5.5f, -0.5f, 0.0f,
+			 -4.5f, -0.5f, 0.0f,
+			 -5.0f,  0.5f, 0.0f,
 
-		 -0.5f, -5.5f, 0.0f, // left
-		 0.5f, -5.5f, 0.0f, // right
-		 0.0f, -4.5f, 0.0f, // top
+			 // right
+			 4.5f, -0.5f, 0.0f,
+			 5.5f, -0.5f, 0.0f,
+			 5.0f,  0.5f, 0.0f,
+			 */
 
-		 /*
-		 - 0.5f, 5.5f, 0.0f, // left
-		 0.5f, 5.5f, 0.0f, // right
-		 0.0f, 6.5f, 0.0f, // top
+			 /*
+			 // only y and z axis
+			 // top
+			 -0.5f,  4.5f, 0.0f, // left
+			  0.5f,  4.5f, 0.0f, // right
+			  0.0f,  5.5f, 0.0f, // top
 
-		 4.5f, -5.5f, 0.0f, // left
-		 5.5f, -5.5f, 0.0f, // right
-		 5.0f, -4.5f, 0.0f, // top
+			 // back
+			 -0.5f, -0.5f, -5.0f,
+			 0.5f, -0.5f, -5.0f,
+			 0.0f,  0.5f, -5.0f,
 
-		 -5.5f, -5.5f, 0.0f, // left
-		 -4.5f, -5.5f, 0.0f, // right
-		 -5.0f, -4.5f, 0.0f // top
-		 */
+			 // center
+			 -0.5f, -0.5f, 0.0f,
+			  0.5f, -0.5f, 0.0f,
+			  0.0f,  0.5f, 0.0f,
 
-	};
-	uint32_t countValues = 18; //45;
+			 // front
+			 -0.5f, -0.5f, 5.0f,
+			  0.5f, -0.5f, 5.0f,
+			  0.0f,  0.5f, 5.0f,
+
+			 // bottom
+			 -0.5f, -5.5f, 0.0f,
+			  0.5f, -5.5f, 0.0f,
+			  0.0f, -4.5f, 0.0f
+			  */
+
+			  // all dimensions
+			  // top
+			  -0.5f,  4.5f, 0.0f, // left
+			   0.5f,  4.5f, 0.0f, // right
+			   0.0f,  5.5f, 0.0f, // top
+
+			   // center
+			  -0.5f, -0.5f, 0.0f,
+			   0.5f, -0.5f, 0.0f,
+			   0.0f,  0.5f, 0.0f,
+
+			   // left
+			   -5.5f, -0.5f, 0.0f,
+			   -4.5f, -0.5f, 0.0f,
+			   -5.0f,  0.5f, 0.0f,
+
+			   // right
+			   4.5f, -0.5f, 0.0f,
+			   5.5f, -0.5f, 0.0f,
+			   5.0f,  0.5f, 0.0f,
+
+			   // front
+			  -0.5f, -0.5f, 5.0f,
+			   0.5f, -0.5f, 5.0f,
+			   0.0f,  0.5f, 5.0f,
+
+			   // back
+			  -0.5f, -0.5f, -5.0f,
+			   0.5f, -0.5f, -5.0f,
+			   0.0f,  0.5f, -5.0f,
+
+			   // bottom
+			  -0.5f, -5.5f, 0.0f,
+			   0.5f, -5.5f, 0.0f,
+			   0.0f, -4.5f, 0.0f
+		};
+		//vertices = test;
+		countValues = sizeof(test) / sizeof(float);
+	}
 
 	//KDTree *tree = new KDTree(points);
 	//KDTree tree(points);
-	KDTree tree(vertices, countValues);
+	KDTree tree(&triangleVertices[0], countValues);
 	tree.print();
 
 	if (vis)
 	{
 #ifdef _WIN32
-		Vis vis(tree, vertices, countValues);
+		Vis vis(tree, &triangleVertices[0], countValues);
 		vis.display();
 #else
 		std::cout << "visualization not supported in non-windows systems" << std::endl;
