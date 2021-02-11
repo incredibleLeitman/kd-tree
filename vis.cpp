@@ -157,7 +157,6 @@ void Vis::display ()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		_shader->use();
-		_shader->setVec3("color", glm::vec3(1.0f, 1.0f, 1.0f));
 
 		// pass projection matrix to shader (note that in this case it could change every frame)
 		glm::mat4 projection = glm::perspective(glm::radians(_cam->Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 500.0f);
@@ -170,11 +169,70 @@ void Vis::display ()
 		glm::mat4 model = glm::mat4(1.0f);
 		_shader->setMat4("model", model);
 
-		// render triangles
-		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, _countVertices/3); // sides * triangles * vertices, e.g 36 for 18 values
+		if (_triangle != nullptr)
+		{
+			// -----------------------------------------------------
+			// move to init
+			float vertices[] =
+			{
+				_triangle->points[0]->dim(X), _triangle->points[0]->dim(Y), _triangle->points[0]->dim(Z),
+				_triangle->points[1]->dim(X), _triangle->points[1]->dim(Y), _triangle->points[1]->dim(Z),
+				_triangle->points[2]->dim(X), _triangle->points[2]->dim(Y), _triangle->points[2]->dim(Z),
+			};
+			unsigned int VAOTriangle, VBOTriangle;
+			glGenVertexArrays(1, &VAOTriangle);
+			glGenBuffers(1, &VBOTriangle);
+			glBindVertexArray(VAOTriangle);
 
-		// we configurate the cube VAO for the boxes
+			glBindBuffer(GL_ARRAY_BUFFER, VBOTriangle);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(0);
+
+			// unbind the VAO so other VAO calls won't accidentally modify this VAO
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			glBindVertexArray(0);
+			// -----------------------------------------------------
+
+			_shader->setVec3("color", glm::vec3(1.0f, 0.0f, 0.0f));
+			glBindVertexArray(VAOTriangle);
+			glDrawArrays(GL_TRIANGLES, 0, 3);
+
+			// -----------------------------------------------------
+			// move to init
+			float line[] =
+			{
+				_cam->Position.x, _cam->Position.y, _cam->Position.z,
+				_cam->Front.x * MAX_DIM, _cam->Front.y * MAX_DIM, _cam->Front.z * MAX_DIM
+			};
+			unsigned int VAOLine, VBOLine;
+			glGenVertexArrays(1, &VAOLine);
+			glGenBuffers(1, &VBOLine);
+			glBindVertexArray(VAOLine);
+
+			glBindBuffer(GL_ARRAY_BUFFER, VBOLine);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(line), line, GL_STATIC_DRAW);
+
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(0);
+
+			// unbind the VAO so other VAO calls won't accidentally modify this VAO
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			glBindVertexArray(0);
+			// -----------------------------------------------------
+
+			_shader->setVec3("color", glm::vec3(1.0f, 0.0f, 0.0f));
+			glBindVertexArray(VAOLine);
+			glDrawArrays(GL_LINES, 0, 2);
+		}
+
+		// render triangles
+		_shader->setVec3("color", glm::vec3(1.0f, 1.0f, 1.0f));
+		glBindVertexArray(VAO);
+		glDrawArrays(GL_TRIANGLES, 0, _countVertices / 3); // sides * triangles * vertices, e.g 36 for 18 values
+
+		// configure cubes VAO for kd-tree bouding boxes
 		/*
 		static constexpr float boxpoints[48] = {
 		0,0,0,
@@ -321,12 +379,28 @@ void Vis::scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 void Vis::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	if (action == GLFW_PRESS)
-    {
-		if (key == GLFW_KEY_G)
+	{
+		if (key == GLFW_KEY_G) // toggle grid view for kd-tree cells
 			_showGrid ^= true;
-		else if (key == GLFW_KEY_P)
+		else if (key == GLFW_KEY_P) // toggle wireframe view
 			glPolygonMode(GL_FRONT_AND_BACK, (_showLines ^= true) ? GL_LINE : GL_FILL);
-    }
+		else if (key == GLFW_KEY_SPACE) // shoots a ray in the current direction
+		{
+			// TODO: define Mode to iterate kd-tree or try bruteforce
+			_triangle = _tree.raycast(Ray(_cam->Front, _cam->Position));
+
+			/* if bruteforce
+			for (auto triangle : _triangles) {
+				glm::vec3 intersection;
+				if (_tree.intersects_triangle(triangle, glm::vec3(cameraPosX, cameraPosY, cameraPosZ), ray, intersection))
+					break;
+			}*/
+
+			#ifdef DEBUG_OUTPUT
+				std::cout << "raycast hit " << ((_triangle) ? _triangle->toString() : "nullptr") << std::endl;
+			#endif
+		}
+	}
 }
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly

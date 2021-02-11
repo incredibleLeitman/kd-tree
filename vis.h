@@ -3,6 +3,7 @@
 #define VIS_H
 
 class KDTree;
+struct Triangle;
 struct GLFWwindow;
 class Shader;
 class Camera;
@@ -13,6 +14,7 @@ class Vis
 {
 private:
 	KDTree &_tree;
+	const Triangle* _triangle; // selected triangle through raycast -> nullptr if nothing hit
 	GLFWwindow* _window;
 	Shader* _shader;
 	Camera* _cam;
