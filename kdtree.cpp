@@ -13,15 +13,6 @@ static auto axis_comparator(Axis axis)
     };
 }
 
-KDTree::KDTree (std::vector<Point*> &points)
-    :_depth(0)
-{
-    std::cout << "building kd-tree with " << points.size() << " points..." << std::endl;
-    auto start = std::chrono::high_resolution_clock::now();
-    _root = build(points, 0);
-    std::cout << " took " << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() << " microseconds" << std::endl;
-}
-
 KDTree::KDTree (float *vertices, uint32_t count)
     :_depth(0)
 {
@@ -42,6 +33,7 @@ KDTree::KDTree (float *vertices, uint32_t count)
             (A[0] + B[0] + C[0]) / 3,
             (A[1] + B[1] + C[1]) / 3,
             (A[2] + B[2] + C[2]) / 3);
+        points[idx / 9]->triangle = new Triangle(A, B, C);
     }
 #elif defined(SAVE_CORNERS)
     // conversion from float[] to vector<Point*>
@@ -60,7 +52,7 @@ KDTree::KDTree (float *vertices, uint32_t count)
 void KDTree::print ()
 {
     std::cout << "kd tree with depth: " << _depth << std::endl;
-    printNode(_root);
+    if (_root) printNode(*_root);
 }
 
 Node* KDTree::root ()
@@ -68,27 +60,26 @@ Node* KDTree::root ()
     return _root;
 }
 
-void KDTree::printNode (Node* node)
+void KDTree::printNode (Node& node)
 {
-    if (node)
-    {
-        std::cout << node->toString() << std::endl;
-        std::cout << "    l: " << (node->left ? node->left->toString() : "nullptr") << std::endl;
-        std::cout << "    r: " << (node->right ? node->right->toString() : "nullptr") << std::endl;
-        if (node->left) printNode(node->left);
-        if (node->right) printNode(node->right);
-    }
-    else
-    {
-        std::cout << "nullptr" << std::endl;
-    }
+    std::cout << node.toString() << std::endl;
+    std::cout << "    l: " << (node.left ? node.left->toString() : "nullptr") << std::endl;
+    std::cout << "    r: " << (node.right ? node.right->toString() : "nullptr") << std::endl;
+    if (node.left) printNode(*node.left);
+    if (node.right) printNode(*node.right);
 }
 
-Node * KDTree::build (std::vector<Point*> &points, uint32_t depth)
+Node* KDTree::build (std::vector<Point*> &points, uint32_t depth)
 {
     size_t count = points.size();
-    if (count == 0 /*points.empty()*/ || depth > MAX_DEPTH)
+    if (count == 0 /*points.empty()*/)
     { 
+        return nullptr;
+    }
+    else if (depth > MAX_DEPTH)
+    {
+        // TODO: store remaining points as leaf node?
+        std::cerr << "tree depth exeded maximum " << MAX_DEPTH << ", abort!" << std::endl;
         return nullptr;
     }
     // TODO: set maximum leaf node count
@@ -153,7 +144,6 @@ Node * KDTree::build (std::vector<Point*> &points, uint32_t depth)
     Point* median = points[pivot];
 
     std::vector<Point*> right(points.begin() + pivot + 1, points.end());
-    //std::vector<Point*> left(points.begin(), points.begin() + pivot);
     points.resize(pivot);
 
     // update extension for resulting axis
@@ -163,5 +153,69 @@ Node * KDTree::build (std::vector<Point*> &points, uint32_t depth)
         std::cout << " -> choosing axis " << AxisToString(axis) << " with max extent: " << max_extent << std::endl;
     #endif
 
+    _nodes++;
     return new Node(axis, extension, median, build(points, depth + 1), build(right, depth + 1));
+}
+
+const Triangle* KDTree::raycast (const Ray ray) const
+{
+    std::cout << "testing intersection with ray " << std::endl;
+    auto start = std::chrono::high_resolution_clock::now();
+
+    float nearest = MAX_DIM;
+    const Triangle* nearest_triangle = nullptr;
+    glm::vec3 result;
+    uint32_t iterated = 0;
+    raycastNode(_root, nearest_triangle, result, ray, nearest, iterated);
+
+    auto end = std::chrono::high_resolution_clock::now();
+
+    std::cout << "took " << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() << " microseconds iterating " << iterated << " of total " << _nodes  << " nodes" << std::endl;
+    return nearest_triangle;
+}
+
+void KDTree::raycastNode (Node* node, const Triangle*& nearest_triangle, glm::vec3& result, const Ray& ray, float& nearest, uint32_t& iterated) const
+{
+    if (node == nullptr) return;
+
+    iterated++;
+
+    // TODO: iterate over all triangles which this point is involved in
+    //for (const Triangle* triangle : node->pt->triangles)
+
+    // if a collision it detected, that is closer to the ray origin than the closest previous collision, store it
+    glm::vec3 current_result(0, 0, 0);
+    float current_distance;
+    if (ray.intersects(node->pt->triangle, current_result, current_distance))
+    {
+        if (current_distance < nearest) {
+            nearest = current_distance;
+            nearest_triangle = node->pt->triangle;
+            result = current_result;
+        }
+    }
+
+    // Is the ray origin within the left or right child node bounding box?
+    Node* near = ray.origin[node->axis] > node->pt->dim(node->axis) ? node->right : node->left;
+    if (ray.dir[node->axis] == 0.0)
+    {
+        // The ray is parallel to the splitting axis, so we only need to check within this box.
+        raycastNode(near, nearest_triangle, result, ray, nearest, iterated);
+    }
+    else
+    {
+        // Calculate the distance from the ray origin to the splitting axis
+        float t = (node->pt->dim(node->axis) - ray.origin[node->axis]) / ray.dir[node->axis];
+
+        // Check this side for intersections up to the distance of the currently best
+        // intersection
+        raycastNode(near, nearest_triangle, result, ray, nearest, iterated);
+
+        // If the far side is closer than the distance to the best current intersection, check that side too
+        if (t < nearest)
+        {
+            Node* far = (near == node->right) ? node->left : node->right;
+            raycastNode(far, nearest_triangle, result, ray, nearest, iterated);
+        }
+    }
 }
