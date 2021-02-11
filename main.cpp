@@ -144,8 +144,6 @@ int main(int argc, char* argv[])
 		countValues = sizeof(test) / sizeof(float);
 	}
 
-	//KDTree *tree = new KDTree(points);
-	//KDTree tree(points);
 	KDTree tree(&triangleVertices[0], countValues);
 	tree.print();
 
