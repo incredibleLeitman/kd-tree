@@ -158,7 +158,6 @@
     <ClInclude Include="kdtree.h" />
     <ClInclude Include="pointGenerator.h" />
     <ClInclude Include="shader.h" />
-    <ClInclude Include="stb_image.h" />
     <ClInclude Include="vis.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
