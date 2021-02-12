@@ -60,11 +60,6 @@ static std::string AxisToString (const Axis axis)
     return s;
 }
 
-static glm::vec3 AxisToVec3 (const Axis axis)
-{
-    return glm::vec3(axis == Axis::X, axis == Axis::Y, axis == Axis::Z);
-}
-
 // stores 3d points
 class Point
 {
@@ -219,4 +214,4 @@ struct Ray
         }
     }
 };
-#endif COMMON_H
+#endif // COMMON_H

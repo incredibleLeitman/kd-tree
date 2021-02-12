@@ -168,8 +168,6 @@ const Triangle* KDTree::raycast (const Ray ray) const
     uint32_t iterated = 0;
     raycastNode(_root, nearest_triangle, result, ray, nearest, iterated);
 
-    auto end = std::chrono::high_resolution_clock::now();
-
     std::cout << "took " << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() << " microseconds iterating " << iterated << " of total " << _nodes  << " nodes" << std::endl;
     return nearest_triangle;
 }

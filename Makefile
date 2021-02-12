@@ -1,5 +1,5 @@
 CXX = g++
-#INCLUDES = -I./includes
+INCLUDES = -I./includes
 #LIBRARIES = -L./libs
 
 CXXFLAGS = -Wall -O3 $(INCLUDES)
