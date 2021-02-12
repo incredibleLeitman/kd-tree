@@ -6,6 +6,7 @@
 
 #include <cstring> // stoi
 #include <iostream>
+#include <chrono>
 
 int main(int argc, char* argv[])
 {
@@ -30,33 +31,30 @@ int main(int argc, char* argv[])
 		//else if (strcmp(argv[i], "--runs") == 0) runs = std::stoi(argv[i + 1]);
 	}
 
-	//float *vertices = nullptr;
-	uint32_t countValues = count;
-	std::vector<float> triangleVertices;
-
 	//fileRnd = "Monkey.obj";
 	//fileRnd = "MonkeySimple.obj";
-	//fileRnd = "nubian_complex.obj";
+	fileRnd = "nubian_complex.obj";
 	//fileRnd = "icosphere.obj";
-	fileRnd = "sphere.obj";
+	//fileRnd = "sphere.obj";
 	//fileRnd = "noobPot.obj";
 
+	std::vector<float> triangleVertices;
 	if (fileRnd.empty() == false) // read points from given file
 	{
 		std::cout << "reading vertices from file: " << fileRnd << "..." << std::endl;
+		auto start = std::chrono::high_resolution_clock::now();
 		triangleVertices = PointGenerator::read_file(fileRnd);
-		countValues = (uint32_t)triangleVertices.size();
+		std::cout << " took " << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() << " microseconds" << std::endl;
 	}
 	else if (count != 0) // generate random points
 	{
 		std::cout << "generating " << count << " random numbers" << std::endl;
 		triangleVertices = PointGenerator::generate_triangles(count);
-		countValues = (uint32_t)triangleVertices.size();
 	}
 	else
 	{
 		std::cout << "using simple test setup" << std::endl;
-		float test[] =
+		triangleVertices =
 		{
 			/*
 			// only x-axis
@@ -140,20 +138,24 @@ int main(int argc, char* argv[])
 			   0.5f, -5.5f, 0.0f,
 			   0.0f, -4.5f, 0.0f
 		};
-		//vertices = test;
-		countValues = sizeof(test) / sizeof(float);
 	}
 
-	KDTree tree(&triangleVertices[0], countValues);
-	tree.print();
+	KDTree tree(&triangleVertices[0], triangleVertices.size());
+	//tree.print();
 
 	if (vis)
 	{
 #ifdef _WIN32
-		Vis vis(tree, &triangleVertices[0], countValues);
+		Vis vis(tree, &triangleVertices[0], triangleVertices.size());
 		vis.display();
 #else
 		std::cout << "visualization not supported in non-windows systems" << std::endl;
 #endif
+	}
+	else
+	{
+		// while read.input != esc
+		// 'r' - create random raycast
+		// or enter points
 	}
 }
