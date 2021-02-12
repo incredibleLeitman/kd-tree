@@ -33,7 +33,7 @@
 // - Ray::intersect -> only use triangle struct; return t instead of storing in ref param
 
 #define SEPERATE_MIN_MAX        // use seperate min_element/max_element instead of combined minmax_element
-#define DEBUG_OUTPUT            // prints debug output
+//#define DEBUG_OUTPUT            // prints debug output
 #define MAX_DEPTH 500           // sets maximum depth for kd-tree nodes
 #define MAX_DIM 100             // maximum dimension for scene extent
 #define SAVE_TRIANGLES        // kd-tree stores the center of each triangle as point

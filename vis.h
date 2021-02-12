@@ -28,7 +28,7 @@ private:
 
 	// rendering
 	float* _vertices;
-	uint32_t _countVertices;
+	size_t _countVertices;
 	unsigned int VBO, VAO;				// vertex array and buffer for triangles
 	unsigned int VAOPlane, VBOPlane;	// vao and vbo for splitting planes
 
@@ -44,7 +44,7 @@ private:
 	void processInput();
 
 public:
-	Vis (KDTree &tree, float *vertices, uint32_t countVertices);
+	Vis (KDTree &tree, float *vertices, size_t countVertices);
 	void display();
 };
 #endif // VIS_H

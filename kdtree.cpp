@@ -13,7 +13,7 @@ static auto axis_comparator(Axis axis)
     };
 }
 
-KDTree::KDTree (float *vertices, uint32_t count)
+KDTree::KDTree (float *vertices, size_t count)
     :_depth(0)
 {
     std::cout << "building kd-tree with " << count << " points..." << std::endl;
@@ -24,7 +24,7 @@ KDTree::KDTree (float *vertices, uint32_t count)
     // conversion from float[] to vector<Point*>
     // add only center point of the triangle
     std::vector<Point*> points(count / 9);
-    for (uint32_t idx = 0; idx < count; idx += 9)
+    for (size_t idx = 0; idx < count; idx += 9)
     {
         float A[3] = { vertices[idx], vertices[idx + 1], vertices[idx + 2] };
         float B[3] = { vertices[idx + 3], vertices[idx + 4], vertices[idx + 5] };
@@ -47,6 +47,7 @@ KDTree::KDTree (float *vertices, uint32_t count)
     auto start = std::chrono::high_resolution_clock::now();
     _root = build(points, 0);
     std::cout << " took " << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() << " microseconds" << std::endl;
+    std::cout << "max depth: " << _depth << " for total nodes: " << _nodes << std::endl;
 }
 
 void KDTree::print ()
@@ -94,13 +95,13 @@ Node* KDTree::build (std::vector<Point*> &points, uint32_t depth)
 
     if (depth > _depth) _depth = depth;
 
-    #ifdef DEBUG_OUTPUT
+    /*#ifdef DEBUG_OUTPUT
         std::cout << "points: " << points.size() << std::endl;
         for (Point* pt : points)
         {
             std::cout << pt->toString() << std::endl;
         }
-    #endif
+    #endif*/
 
     // select splitting axis by choosing max extent
     Axis axis = Axis::X;
@@ -168,7 +169,7 @@ const Triangle* KDTree::raycast (const Ray ray) const
     uint32_t iterated = 0;
     raycastNode(_root, nearest_triangle, result, ray, nearest, iterated);
 
-    std::cout << "took " << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() << " microseconds iterating " << iterated << " of total " << _nodes  << " nodes" << std::endl;
+    std::cout << " took " << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() << " microseconds iterating " << iterated << " of total " << _nodes  << " nodes" << std::endl;
     return nearest_triangle;
 }
 
