@@ -6,7 +6,7 @@ Assignment for ALGO (algorithms and datastructures) @FHTechnikumWien
 - glad https://glad.dav1d.de/
 - khr https://www.khronos.org/registry/EGL/api/KHR/khrplatform.h
 - glm https://github.com/g-truc/glm
-- OBJ_Loader.h https://github.com/Bly7/OBJ-Loader/blob/master/Source/OBJ_Loader.h
+- OBJ_Loader.h https://github.com/Bly7/OBJ-Loader or my updated fork https://github.com/incredibleLeitman/OBJ-Loader
 
 ## references
 - Dissertation thesis Heuristic Ray Shooting Algorithms - Vlastimil Havran
