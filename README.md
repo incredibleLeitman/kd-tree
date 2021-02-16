@@ -1,6 +1,8 @@
 # kd-tree
 Assignment for ALGO (algorithms and datastructures) @FHTechnikumWien
 
+![Screenshot](teapot.png?raw=true "noobpot")
+
 ## dependencies
 - glfw3 https://github.com/glfw/glfw
 - glad https://glad.dav1d.de/
