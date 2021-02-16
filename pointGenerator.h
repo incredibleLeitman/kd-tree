@@ -11,21 +11,29 @@
 //#include <algorithm>
 #include <OBJ_Loader.h>
 
-// TODO:
-// finish 3d point generation from file (https://stackoverflow.com/questions/14265581/parse-split-a-string-in-c-using-string-delimiter-standard-c)
-// really generate / read triangles instead of points
-// preallocating vector / array and use emplace_back
-
 class PointGenerator
 {
 public:
+    static void init ()
+    {
+        static bool init = false;
+        if (!init)
+        {
+            #ifdef _DEBUG
+                srand(static_cast <unsigned> (0)); // fixed seed for testing
+            #else
+                srand(static_cast <unsigned> (time(0)));
+            #endif
+            init = true;
+        }
+    }
+
     //static std::vector<Point*> read_file (const std::string& fileRnd)
     static std::vector<float> read_file (const std::string& fileRnd)
     {
         objl::Loader loader;
         if (loader.LoadFile(fileRnd))
         {
-            std::cout << "[->] Done!" << std::endl;
             std::cout << "Vertices: " << loader.LoadedVertices.size() << std::endl;
         }
         else
@@ -44,16 +52,22 @@ public:
         return vertices;
     }
 
-    static std::vector<float> generate_triangles(const uint32_t count, const float min = 0, const float max = MAX_DIM)
+    static std::vector<float> generate_3dpoint (const float min = 0, const float max = MAX_DIM)
     {
+        init();
+        return std::vector<float>
+        {
+            min + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / max)),
+            min + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / max)),
+            min + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / max))
+        };
+    }
+
+    static std::vector<float> generate_triangles (const uint32_t count, const float min = 0, const float max = MAX_DIM)
+    {
+        init();
+
         std::vector<float> triangles(count*9);
-
-#ifdef _DEBUG
-        srand(static_cast <unsigned> (0)); // fixed seed for testing
-#else
-        srand(static_cast <unsigned> (time(0)));
-#endif
-
         float EXT = 5;
         for (uint32_t i = 0; i < count; ++i)
         {
