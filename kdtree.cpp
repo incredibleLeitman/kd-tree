@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <chrono>
 #include <iostream>
+#include <queue>
 
 // comparator lambda for axis dependent comparison
 static auto axis_comparator(Axis axis)
@@ -187,7 +188,8 @@ void KDTree::raycastNode (Node* node, const Triangle*& nearest_triangle, glm::ve
     float current_distance;
     if (ray.intersects(node->pt->triangle, current_result, current_distance))
     {
-        if (current_distance < nearest) {
+        if (current_distance < nearest)
+        {
             nearest = current_distance;
             nearest_triangle = node->pt->triangle;
             result = current_result;
@@ -217,4 +219,42 @@ void KDTree::raycastNode (Node* node, const Triangle*& nearest_triangle, glm::ve
             raycastNode(far, nearest_triangle, result, ray, nearest, iterated);
         }
     }
+}
+
+const Triangle* KDTree::bruteforce (Ray ray) const
+{
+    auto start = std::chrono::high_resolution_clock::now();
+    std::cout << "brute force" << std::endl;
+
+    // breadth first non-recursive traversion of kd-tree
+    std::queue<Node*> q;
+    const Triangle* triangle = nullptr;
+    Node* cur = _root;
+    q.push(cur);
+    uint32_t nodes = 0;
+    glm::vec3 current_result(0, 0, 0);
+    float current_distance;
+    float nearest = MAX_DIM;
+    while (!q.empty())
+    {
+        nodes++;
+        cur = q.front();
+        q.pop();
+
+        //for (auto triangle : cur->pt->triangles)
+        if (ray.intersects(cur->pt->triangle, current_result, current_distance))
+        {
+            if (current_distance < nearest)
+            {
+                nearest = current_distance;
+                triangle = cur->pt->triangle;
+            }
+            //break; // can not break because another node may be closer!
+        }
+
+        if (cur->left) q.push(cur->left);
+        if (cur->right) q.push(cur->right);
+    }
+    std::cout << " needed " << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() << " microseconds" << std::endl;
+    return triangle;
 }

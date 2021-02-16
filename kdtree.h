@@ -20,6 +20,7 @@ public:
     Node* root ();
 
     const Triangle* raycast (const Ray ray) const;
+    const Triangle* bruteforce (const Ray ray) const;
 
 //protected:
     ~KDTree ()
