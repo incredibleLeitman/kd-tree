@@ -5,9 +5,15 @@
 
 // #define GLFW_INCLUDE_NONE before including GLFW, or include glad bfore including glfw.
 #include <GLFW/glfw3.h>
-#include <stack>
+#include <chrono>
+#if defined(QUEUE)
+	#include <queue>
+#elif defined(STACK)
+	#include <stack>
+#endif
 
-float lastX, lastY = 0;
+glm::vec3 _lastCamPos; // last stored camera position
+glm::vec3 _lastCamView; // last stored camera view direction
 
 Vis::Vis (KDTree &tree, float* vertices, size_t countVertices)
 	: _tree(tree), _vertices(vertices), _countVertices(countVertices), _showGrid(false)
@@ -78,6 +84,9 @@ int Vis::init ()
 
 	// configure global opengl state
 	glEnable(GL_DEPTH_TEST);
+
+	// set wireframe mode
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	return 0;
 }
@@ -169,6 +178,35 @@ void Vis::display ()
 		glm::mat4 model = glm::mat4(1.0f);
 		_shader->setMat4("model", model);
 
+		// render raycast line for easier targeting
+		// TODO: use point
+		// -----------------------------------------------------
+		// move to init
+		/*_shader->setVec3("color", glm::vec3(0.0f, 1.0f, 0.0f));
+		float line2[] =
+		{
+			_cam->Position.x, _cam->Position.y + 0.0001f, _cam->Position.z,
+			_cam->Front.x * MAX_DIM, _cam->Front.y * MAX_DIM, _cam->Front.z * MAX_DIM
+		};
+		glGenVertexArrays(1, &VAOLine);
+		glGenBuffers(1, &VBOLine);
+		glBindVertexArray(VAOLine);
+
+		glBindBuffer(GL_ARRAY_BUFFER, VBOLine);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(line2), line2, GL_STATIC_DRAW);
+
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+
+		// unbind the VAO so other VAO calls won't accidentally modify this VAO
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+		// -----------------------------------------------------
+
+		glBindVertexArray(VAOLine);
+		glDrawArrays(GL_LINES, 0, 2);*/
+
+		// render triangle if hit
 		if (_triangle != nullptr)
 		{
 			// -----------------------------------------------------
@@ -177,7 +215,7 @@ void Vis::display ()
 			{
 				_triangle->points[0]->dim(X), _triangle->points[0]->dim(Y), _triangle->points[0]->dim(Z),
 				_triangle->points[1]->dim(X), _triangle->points[1]->dim(Y), _triangle->points[1]->dim(Z),
-				_triangle->points[2]->dim(X), _triangle->points[2]->dim(Y), _triangle->points[2]->dim(Z),
+				_triangle->points[2]->dim(X), _triangle->points[2]->dim(Y), _triangle->points[2]->dim(Z)
 			};
 			unsigned int VAOTriangle, VBOTriangle;
 			glGenVertexArrays(1, &VAOTriangle);
@@ -199,38 +237,40 @@ void Vis::display ()
 			glBindVertexArray(VAOTriangle);
 			glDrawArrays(GL_TRIANGLES, 0, 3);
 
-			// -----------------------------------------------------
-			// move to init
-			float line[] =
+			// render raycast line
+			if (_showRayCast)
 			{
-				_cam->Position.x, _cam->Position.y, _cam->Position.z,
-				_cam->Front.x * MAX_DIM, _cam->Front.y * MAX_DIM, _cam->Front.z * MAX_DIM
-			};
-			unsigned int VAOLine, VBOLine;
-			glGenVertexArrays(1, &VAOLine);
-			glGenBuffers(1, &VBOLine);
-			glBindVertexArray(VAOLine);
+				// -----------------------------------------------------
+				// move to init
+				float line[] =
+				{
+					_lastCamPos.x, _lastCamPos.y, _lastCamPos.z,
+					_lastCamView.x, _lastCamView.y, _lastCamView.z
+				};
+				glGenVertexArrays(1, &VAOLine);
+				glGenBuffers(1, &VBOLine);
+				glBindVertexArray(VAOLine);
 
-			glBindBuffer(GL_ARRAY_BUFFER, VBOLine);
-			glBufferData(GL_ARRAY_BUFFER, sizeof(line), line, GL_STATIC_DRAW);
+				glBindBuffer(GL_ARRAY_BUFFER, VBOLine);
+				glBufferData(GL_ARRAY_BUFFER, sizeof(line), line, GL_STATIC_DRAW);
 
-			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-			glEnableVertexAttribArray(0);
+				glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+				glEnableVertexAttribArray(0);
 
-			// unbind the VAO so other VAO calls won't accidentally modify this VAO
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
-			glBindVertexArray(0);
-			// -----------------------------------------------------
+				// unbind the VAO so other VAO calls won't accidentally modify this VAO
+				glBindBuffer(GL_ARRAY_BUFFER, 0);
+				glBindVertexArray(0);
+				// -----------------------------------------------------
 
-			_shader->setVec3("color", glm::vec3(1.0f, 0.0f, 0.0f));
-			glBindVertexArray(VAOLine);
-			glDrawArrays(GL_LINES, 0, 2);
+				glBindVertexArray(VAOLine);
+				glDrawArrays(GL_LINES, 0, 2);
+			}
 		}
 
-		// render triangles
+		// render all triangles
 		_shader->setVec3("color", glm::vec3(1.0f, 1.0f, 1.0f));
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, _countVertices / 3); // sides * triangles * vertices, e.g 36 for 18 values
+		glDrawArrays(GL_TRIANGLES, 0, (GLsizei)(_countVertices / 3)); // sides * triangles * vertices, e.g 36 for 18 values
 
 		// configure cubes VAO for kd-tree bouding boxes
 		/*
@@ -273,56 +313,55 @@ void Vis::display ()
 				pointShader.setMat4("model", model);
 				glDrawArrays(GL_LINE_STRIP, 0, 16);
 			}*/
-			
-			// temp inorder non-recursive traversion of kd-tree
-			std::stack<Node*> s;
-			uint32_t nodes = 0;
-			Node* cur = _tree.root();
-			while (cur != NULL || s.empty() == false)
-			{
-				while (cur != NULL)
+
+			auto start = std::chrono::high_resolution_clock::now();
+			std::cout << "iterating all splitting planes";
+
+			#if defined(QUEUE)
+				// breadth first non-recursive traversion of kd-tree
+				std::queue<Node*> q;
+				Node* cur = _tree.root();
+				q.push(cur);
+				uint32_t nodes = 0;
+				size_t step = 0;
+				while (!q.empty())
 				{
-					s.push(cur);
-					cur = cur->left;
+					if (step++ > _step) break;
+
+					cur = q.front();
+					q.pop();
+
+					draw_splitting_plane(cur, (nodes++) % 3);
+
+					if (cur->left) q.push(cur->left);
+					if (cur->right) q.push(cur->right);
 				}
-
-				cur = s.top();
-				s.pop();
-
-				// set color to R -> G -> B continously
-				int mod = nodes % 3;
-				_shader->setVec3("color", glm::vec3(mod == 0, mod == 1, mod == 2));
-				nodes = (nodes + 1) % 3;
-
-				// get plane transform and rotation
-				model = glm::mat4(1.0f);
-				// move the plane on splitting axis to point, other axis to extent/2
-				glm::vec3 trans;
-				for (Axis cand : Dimensions)
+			#elif defined (STACK)
+				// inorder depth first non-recursive traversion of the tree
+				std::stack<Node*> s;
+				uint32_t nodes = 0;
+				Node* cur = _tree.root();
+				size_t step = 0;
+				while (cur != NULL || s.empty() == false)
 				{
-					if (cand == cur->axis) trans[(int)cand] = cur->pt->dim(cand);
-					else trans[(int)cand] = cur->pt->dim(cand) - cur->extent->dim(cand) / 2;
+					while (cur != NULL)
+					{
+						s.push(cur);
+						cur = cur->left;
+					}
+
+					if (step++ > _step) break;
+
+					cur = s.top();
+					s.pop();
+
+					draw_splitting_plane(cur, (nodes++) % 3);
+
+					cur = cur->right;
 				}
-				model = glm::translate(model, trans);
-				#ifdef DEBUG_OUTPUT
-					std::cout << "color: " << (mod == 0) << ", " << (mod == 1) << ", " << (mod == 2) << std::endl;
-					std::cout << "for splitting plane: " << AxisToString(cur->axis) << " on point " << cur->pt->toString() << std::endl;
-					std::cout << "with extension: " << cur->extent->toString() << std::endl;
-					std::cout << "translation vector: " << trans.x << ", " << trans.y << ", " << trans.z << std::endl;
-				#endif
-				model = glm::scale(model, cur->extent->toVec3());
-				//model = glm::rotate(model, glm::radians(90.0f), AxisToVec3(cur->axis));
-				if (cur->axis == Axis::X) model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0, -1, 0));
-				else if (cur->axis == Axis::Y) model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1, 0, 0));
-				//else if (cur->axis == Axis::Z) // no need to rotate Z plane
+			#endif
 
-				_shader->setMat4("model", model);
-				//glDrawArrays(GL_LINE_STRIP, 0, 16);
-				//glDrawArrays(GL_TRIANGLES, 0, 36);
-				glDrawArrays(GL_TRIANGLE_STRIP, 0, 36);
-
-				cur = cur->right;
-			}
+			std::cout << " took " << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() << " microseconds" << std::endl;
 		}
 
 		glfwSwapBuffers(_window);
@@ -348,56 +387,64 @@ int Vis::exitWithError(std::string code)
 
 // glfw: whenever the mouse moves, this callback is called
 // -------------------------------------------------------
-void Vis::mouse_callback(GLFWwindow* window, double xpos, double ypos)
+void Vis::mouse_callback (GLFWwindow* window, double xpos, double ypos)
 {
 	static bool firstMouse = true;
     if (firstMouse)
     {
-        lastX = (float)xpos;
-        lastY = (float)ypos;
+        _lastX = (float)xpos;
+        _lastY = (float)ypos;
         firstMouse = false;
     }
 
-    float xoffset = (float)(xpos - lastX);
-    float yoffset = (float)(lastY - ypos); // reversed since y-coordinates go from bottom to top
+    float xoffset = (float)(xpos - _lastX);
+    float yoffset = (float)(_lastY - ypos); // reversed since y-coordinates go from bottom to top
 
-    lastX = (float)xpos;
-    lastY = (float)ypos;
+    _lastX = (float)xpos;
+    _lastY = (float)ypos;
 
-	_cam->ProcessMouseMovement(xoffset, yoffset);
+	_cam->ProcessMouseMovement (xoffset, yoffset);
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
 // ----------------------------------------------------------------------
-void Vis::scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+void Vis::scroll_callback (GLFWwindow* window, double xoffset, double yoffset)
 {
 	_cam->ProcessMouseScroll((float)yoffset);
 }
 
 // The callback function receives the keyboard key, platform-specific scancode, key action and modifier bits.
 // ----------------------------------------------------------------------
-void Vis::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+void Vis::key_callback (GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	if (action == GLFW_PRESS)
 	{
 		if (key == GLFW_KEY_G) // toggle grid view for kd-tree cells
 			_showGrid ^= true;
+		if (key == GLFW_KEY_KP_ADD) // increase steps for plane display
+			_step++;
+		if (key == GLFW_KEY_KP_SUBTRACT) // decrease steps for plane display
+			_step--;
 		else if (key == GLFW_KEY_P) // toggle wireframe view
 			glPolygonMode(GL_FRONT_AND_BACK, (_showLines ^= true) ? GL_LINE : GL_FILL);
+		else if (key == GLFW_KEY_R) // toggle raycast display
+			_showRayCast ^= true;
 		else if (key == GLFW_KEY_SPACE) // shoots a ray in the current direction
 		{
-			// TODO: define Mode to iterate kd-tree or try bruteforce
-			_triangle = _tree.raycast(Ray(_cam->Front, _cam->Position));
+			_lastCamPos = _cam->Position;
+			_lastCamView = glm::vec3(_cam->Front.x * MAX_DIM, _cam->Front.y * MAX_DIM, _cam->Front.z * MAX_DIM);
 
-			/* if bruteforce
-			for (auto triangle : _triangles) {
-				glm::vec3 intersection;
-				if (_tree.intersects_triangle(triangle, glm::vec3(cameraPosX, cameraPosY, cameraPosZ), ray, intersection))
-					break;
-			}*/
+			Ray ray = Ray(_cam->Front, _cam->Position);
+			_triangle = _tree.raycast(ray);
 
 			#ifdef DEBUG_OUTPUT
-				std::cout << "raycast hit " << ((_triangle) ? _triangle->toString() : "nullptr") << std::endl;
+				std::cout << "raycast hit\t\t" << ((_triangle) ? _triangle->toString() : "nullptr") << std::endl;
+			#endif
+
+			// TODO: define Mode to iterate kd-tree or try bruteforce
+			_triangle = _tree.bruteforce(ray);
+			#ifdef DEBUG_OUTPUT
+				std::cout << "bruteforce find\t\t" << ((_triangle) ? _triangle->toString() : "nullptr") << std::endl;
 			#endif
 		}
 	}
@@ -418,4 +465,36 @@ void Vis::processInput ()
 		_cam->ProcessKeyboard(LEFT, deltaTime);
 	if (glfwGetKey(_window, GLFW_KEY_D) == GLFW_PRESS)
 		_cam->ProcessKeyboard(RIGHT, deltaTime);
+}
+
+void Vis::draw_splitting_plane (Node* cur, size_t mod)
+{
+	// set color to R -> G -> B continously
+	_shader->setVec3("color", glm::vec3(mod == 0, mod == 1, mod == 2));
+
+	// get plane transform and rotation
+	glm::mat4 model = glm::mat4(1.0f);
+	// move the plane on splitting axis to point, other axis to extent/2
+	glm::vec3 trans;
+	for (Axis cand : Dimensions)
+	{
+		if (cand == cur->axis) trans[(int)cand] = cur->pt->dim(cand);
+		else trans[(int)cand] = cur->pt->dim(cand) - cur->extent->dim(cand) / 2;
+	}
+	model = glm::translate(model, trans);
+#ifdef DEBUG_OUTPUT
+	std::cout << "color: " << (mod == 0) << ", " << (mod == 1) << ", " << (mod == 2) << std::endl;
+	std::cout << "for splitting plane: " << AxisToString(cur->axis) << " on point " << cur->pt->toString() << std::endl;
+	std::cout << "with extension: " << cur->extent->toString() << std::endl;
+	std::cout << "translation vector: " << trans.x << ", " << trans.y << ", " << trans.z << std::endl;
+#endif
+	model = glm::scale(model, cur->extent->toVec3());
+	if (cur->axis == Axis::X) model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0, -1, 0));
+	else if (cur->axis == Axis::Y) model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1, 0, 0));
+	//else if (cur->axis == Axis::Z) // no need to rotate Z plane
+
+	_shader->setMat4("model", model);
+	//glDrawArrays(GL_LINE_STRIP, 0, 16);
+	//glDrawArrays(GL_TRIANGLES, 0, 36);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 36);
 }
