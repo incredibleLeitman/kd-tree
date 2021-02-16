@@ -47,7 +47,7 @@ KDTree::KDTree (float *vertices, size_t count)
 #endif
     auto start = std::chrono::high_resolution_clock::now();
     _root = build(points, 0);
-    std::cout << " took " << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() << " microseconds" << std::endl;
+    std::cout << "\ttook\t\t" << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() << " microseconds" << std::endl;
     std::cout << "max depth: " << _depth << " for total nodes: " << _nodes << std::endl;
 }
 
@@ -170,7 +170,7 @@ const Triangle* KDTree::raycast (const Ray ray) const
     uint32_t iterated = 0;
     raycastNode(_root, nearest_triangle, result, ray, nearest, iterated);
 
-    std::cout << " took " << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() << " microseconds iterating " << iterated << " of total " << _nodes  << " nodes" << std::endl;
+    std::cout << "\ttook\t\t" << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() << " microseconds iterating " << iterated << " of total " << _nodes  << " nodes" << std::endl;
     return nearest_triangle;
 }
 
@@ -255,6 +255,6 @@ const Triangle* KDTree::bruteforce (Ray ray) const
         if (cur->left) q.push(cur->left);
         if (cur->right) q.push(cur->right);
     }
-    std::cout << " needed " << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() << " microseconds" << std::endl;
+    std::cout << "\tneeded\t\t" << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() << " microseconds" << std::endl;
     return triangle;
 }

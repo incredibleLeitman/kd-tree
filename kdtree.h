@@ -10,8 +10,8 @@ class KDTree
 {
 private:
     Node* _root;
-    uint32_t _nodes; // total amount of nodes
-    uint32_t _depth; // maximum depth
+    uint32_t _nodes = 0; // total amount of nodes
+    uint32_t _depth = 0; // maximum depth
 
 public:
     KDTree (float *vertices, size_t size);
