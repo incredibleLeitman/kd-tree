@@ -44,7 +44,7 @@ public:
         return vertices;
     }
 
-    static std::vector<float> generate_triangles(const uint32_t count, const float min = -MAX_DIM, const float max = MAX_DIM)
+    static std::vector<float> generate_triangles(const uint32_t count, const float min = 0, const float max = MAX_DIM)
     {
         std::vector<float> triangles(count*9);
 
