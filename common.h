@@ -40,6 +40,10 @@
 //#define SAVE_CORNERS            // kd-tree stores each corner point of each triangle
 #define EPSILON 0.0000001       // minimum allowed difference for points to determine equality
 
+// defines wheter use a stack inorder depth first search oder a queue for breadth first search
+#define QUEUE
+//#define STACK
+
 const int WIDTH = 1024, HEIGHT = 800; // screen dimensions
 
 class Point;
