@@ -10,7 +10,7 @@
 
 int main(int argc, char* argv[])
 {
-    std::cout << "ALGO assignment \"kd-tree\"\n";
+	std::cout << "ALGO assignment \"kd-tree\"\n=============================\n" << std::endl;
 
 	// read program arguments
 	// TODO: care a little more <3 --> use getopt
@@ -20,6 +20,7 @@ int main(int argc, char* argv[])
 	bool vis = true;
 	std::string fileRnd = "";
 	uint32_t count = 0;
+	//uint32_t runs = 0;
 
 	// TODO: add params:
 	// -runs <count>        runs performance mode multiple times
@@ -36,8 +37,8 @@ int main(int argc, char* argv[])
 	//fileRnd = "nubian_complex.obj";
 	//fileRnd = "icosphere.obj";
 	//fileRnd = "sphere.obj";
-	fileRnd = "noobPot.obj";
-	//count = 100000;
+	//fileRnd = "noobPot.obj";
+	count = 100000;
 
 	std::vector<float> triangleVertices;
 	if (fileRnd.empty() == false) // read points from given file
@@ -150,8 +151,46 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		// while read.input != esc
-		// 'r' - create random raycast
-		// or enter points
+		std::cout << std::endl << "performance mode" << std::endl <<
+			"==========================================================" << std::endl <<
+			"x... exit" << std::endl <<
+			"r... test raycast from 0, 0, 0 to random point" << std::endl <<
+			"c... test raycast between two random points" << std::endl <<
+			"----------------------------------------------------------" << std::endl << std::endl;
+		
+		char input = '0';
+		while (input != 'x')
+		{
+			std::cin >> input;
+			if (input == 'r')
+			{
+				// TODO: add ctor (or better raycast function overload) for float vector
+				std::vector<float> point = PointGenerator::generate_3dpoint();
+				std::cout << "testing intersection from 0, 0, 0 - " << point[0] << ", " << point[1] << ", " << point[2] << std::endl;
+				Ray ray(glm::vec3(point[0], point[1], point[2]));
+
+				const Triangle *triangle = tree.raycast(ray);
+				std::cout << "hit triangle: " << (triangle ? triangle->toString() : "nullptr") << std::endl;
+
+				triangle = tree.bruteforce(ray);
+				std::cout << "hit triangle: " << (triangle ? triangle->toString() : "nullptr") << std::endl;
+			}
+			else if (input == 'c')
+			{
+				// TODO: add ctor (or better raycast function overload) for float vector
+				std::vector<float> dir = PointGenerator::generate_3dpoint();
+				std::vector<float> from = PointGenerator::generate_3dpoint();
+				std::cout << "testing intersection from " <<
+					dir[0] << ", " << dir[1] << ", " << dir[2] << " - " <<
+					from[0] << ", " << from[1] << ", " << from[2] << std::endl;
+				Ray ray((glm::vec3(dir[0], dir[1], dir[2]), glm::vec3(from[0], from[1], from[2])));
+
+				const Triangle* triangle = tree.raycast(ray);
+				std::cout << "hit triangle: " << (triangle ? triangle->toString() : "nullptr") << std::endl;
+
+				triangle = tree.bruteforce(ray);
+				std::cout << "hit triangle: " << (triangle ? triangle->toString() : "nullptr") << std::endl;
+			}
+		}
 	}
 }
