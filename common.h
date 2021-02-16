@@ -44,6 +44,11 @@
 #define QUEUE
 //#define STACK
 
+// defines triangle axis placement for test mode
+//#define AXIS_X
+#define AXIS_Y_Z
+//#define AXIS_X_Y_Z
+
 const int WIDTH = 1024, HEIGHT = 800; // screen dimensions
 
 class Point;

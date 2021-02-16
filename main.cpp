@@ -33,10 +33,11 @@ int main(int argc, char* argv[])
 
 	//fileRnd = "Monkey.obj";
 	//fileRnd = "MonkeySimple.obj";
-	fileRnd = "nubian_complex.obj";
+	//fileRnd = "nubian_complex.obj";
 	//fileRnd = "icosphere.obj";
 	//fileRnd = "sphere.obj";
-	//fileRnd = "noobPot.obj";
+	fileRnd = "noobPot.obj";
+	//count = 100000;
 
 	std::vector<float> triangleVertices;
 	if (fileRnd.empty() == false) // read points from given file
@@ -48,7 +49,7 @@ int main(int argc, char* argv[])
 	}
 	else if (count != 0) // generate random points
 	{
-		std::cout << "generating " << count << " random numbers" << std::endl;
+		std::cout << "generating " << count << " random triangles" << std::endl;
 		triangleVertices = PointGenerator::generate_triangles(count);
 	}
 	else
@@ -56,87 +57,82 @@ int main(int argc, char* argv[])
 		std::cout << "using simple test setup" << std::endl;
 		triangleVertices =
 		{
-			/*
-			// only x-axis
-			// center
-			-0.5f, -0.5f, 0.0f,
-			 0.5f, -0.5f, 0.0f,
-			 0.0f,  0.5f, 0.0f,
+			#if defined (AXIS_X)
+				// center
+				-0.5f, -0.5f, 0.0f,
+				 0.5f, -0.5f, 0.0f,
+				 0.0f,  0.5f, 0.0f,
 
-			 // left
-			 -5.5f, -0.5f, 0.0f,
-			 -4.5f, -0.5f, 0.0f,
-			 -5.0f,  0.5f, 0.0f,
+				// left
+				-5.5f, -0.5f, 0.0f,
+				-4.5f, -0.5f, 0.0f,
+				-5.0f,  0.5f, 0.0f,
 
-			 // right
-			 4.5f, -0.5f, 0.0f,
-			 5.5f, -0.5f, 0.0f,
-			 5.0f,  0.5f, 0.0f,
-			 */
+				// right
+				 4.5f, -0.5f, 0.0f,
+				 5.5f, -0.5f, 0.0f,
+				 5.0f,  0.5f, 0.0f
+			#elif defined (AXIS_Y_Z)
+				// top
+				-0.5f,  4.5f, 0.0f, // left
+				 0.5f,  4.5f, 0.0f, // right
+				 0.0f,  5.5f, 0.0f, // top
 
-			 /*
-			 // only y and z axis
-			 // top
-			 -0.5f,  4.5f, 0.0f, // left
-			  0.5f,  4.5f, 0.0f, // right
-			  0.0f,  5.5f, 0.0f, // top
+				// back
+				-0.5f, -0.5f, -5.0f,
+				 0.5f, -0.5f, -5.0f,
+				 0.0f,  0.5f, -5.0f,
 
-			 // back
-			 -0.5f, -0.5f, -5.0f,
-			 0.5f, -0.5f, -5.0f,
-			 0.0f,  0.5f, -5.0f,
+				// center
+				-0.5f, -0.5f, 0.0f,
+				 0.5f, -0.5f, 0.0f,
+				 0.0f,  0.5f, 0.0f,
 
-			 // center
-			 -0.5f, -0.5f, 0.0f,
-			  0.5f, -0.5f, 0.0f,
-			  0.0f,  0.5f, 0.0f,
+				// front
+				-0.5f, -0.5f, 5.0f,
+				 0.5f, -0.5f, 5.0f,
+				 0.0f,  0.5f, 5.0f,
 
-			 // front
-			 -0.5f, -0.5f, 5.0f,
-			  0.5f, -0.5f, 5.0f,
-			  0.0f,  0.5f, 5.0f,
+				// bottom
+				-0.5f, -5.5f, 0.0f,
+				 0.5f, -5.5f, 0.0f,
+				 0.0f, -4.5f, 0.0f
+			#elif defined (AXIS_X_Y_Z)
+				// top
+				-0.5f,  4.5f, 0.0f, // left
+				 0.5f,  4.5f, 0.0f, // right
+				 0.0f,  5.5f, 0.0f, // top
 
-			 // bottom
-			 -0.5f, -5.5f, 0.0f,
-			  0.5f, -5.5f, 0.0f,
-			  0.0f, -4.5f, 0.0f
-			  */
+				// center
+				-0.5f, -0.5f, 0.0f,
+				 0.5f, -0.5f, 0.0f,
+				 0.0f,  0.5f, 0.0f,
 
-			  // all dimensions
-			  // top
-			  -0.5f,  4.5f, 0.0f, // left
-			   0.5f,  4.5f, 0.0f, // right
-			   0.0f,  5.5f, 0.0f, // top
+				// left
+				-5.5f, -0.5f, 0.0f,
+				-4.5f, -0.5f, 0.0f,
+				-5.0f,  0.5f, 0.0f,
 
-			   // center
-			  -0.5f, -0.5f, 0.0f,
-			   0.5f, -0.5f, 0.0f,
-			   0.0f,  0.5f, 0.0f,
+				// right
+				 4.5f, -0.5f, 0.0f,
+				 5.5f, -0.5f, 0.0f,
+				 5.0f,  0.5f, 0.0f,
 
-			   // left
-			   -5.5f, -0.5f, 0.0f,
-			   -4.5f, -0.5f, 0.0f,
-			   -5.0f,  0.5f, 0.0f,
+				// front
+				-0.5f, -0.5f, 5.0f,
+				 0.5f, -0.5f, 5.0f,
+				 0.0f,  0.5f, 5.0f,
 
-			   // right
-			   4.5f, -0.5f, 0.0f,
-			   5.5f, -0.5f, 0.0f,
-			   5.0f,  0.5f, 0.0f,
+				// back
+				-0.5f, -0.5f, -5.0f,
+				 0.5f, -0.5f, -5.0f,
+				 0.0f,  0.5f, -5.0f,
 
-			   // front
-			  -0.5f, -0.5f, 5.0f,
-			   0.5f, -0.5f, 5.0f,
-			   0.0f,  0.5f, 5.0f,
-
-			   // back
-			  -0.5f, -0.5f, -5.0f,
-			   0.5f, -0.5f, -5.0f,
-			   0.0f,  0.5f, -5.0f,
-
-			   // bottom
-			  -0.5f, -5.5f, 0.0f,
-			   0.5f, -5.5f, 0.0f,
-			   0.0f, -4.5f, 0.0f
+				// bottom
+				-0.5f, -5.5f, 0.0f,
+				 0.5f, -5.5f, 0.0f,
+				 0.0f, -4.5f, 0.0f
+			#endif
 		};
 	}
 
