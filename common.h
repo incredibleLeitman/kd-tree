@@ -9,36 +9,40 @@
 #include <glm/gtx/quaternion.hpp>
 #include <string>
 
-// ----------------------------------------
+// --------------------------------------------------------------------------------
 // Considerations...
-// ----------------------------------------
+// --------------------------------------------------------------------------------
 // - array vs vector
 //      + could be faster --> test, needed?
-// - check if chrono clock in finally block is slower than execution
+// - check if chrono clock in finally block is slower than in execution
 // - maybe replace Axis enum with int -> easier iteration, stringification and extension
-// - store multiple triangles for points, as common in standard meshes
-
-// - fill kdtree with 3d points or triangles? -> implementation for both: center points and corners
+// - fill kdtree with center points or corners for triangles?
+//      -> implementation for both
+//      -> corners could be improved to reduce vertex count (store multiple triangles, common in standard meshes):
+//          if more vertices share a triangle, make a list for each
+//          --> render routine musst be updated to triangle fan
 
 // TODO:
-// - outsource enums, structs and classes into own files
-// - create struct/class for triangle
-// - replace custom Point class with glm?
-// - using references from lists --> better arrays
-// - kd-tree using max iteration depth to abort?
-// - compare with bruteforce
-// - replace vis inorder tree iteration with recursive search --> also use for bruteforce
-// - remove glm includes from common.h -> use implementation file
+// --------------------------------------------------------------------------------
+// - show raycast hit as point or omit the param
+// - add bounding boxes display to vis in addition to splitting planes
 
+// REFACTOR:
+// --------------------------------------------------------------------------------
 // - Ray::intersect -> only use triangle struct; return t instead of storing in ref param
+// - outsource enums, structs and classes into own files
+// - replace custom Point class with glm::vec3 ?
+// - remove glm includes from common.h -> use implementation file
+// --------------------------------------------------------------------------------
 
 #define SEPERATE_MIN_MAX        // use seperate min_element/max_element instead of combined minmax_element
 //#define DEBUG_OUTPUT            // prints debug output
 #define MAX_DEPTH 500           // sets maximum depth for kd-tree nodes
 #define MAX_DIM 100             // maximum dimension for scene extent
-#define SAVE_TRIANGLES        // kd-tree stores the center of each triangle as point
-//#define SAVE_CORNERS            // kd-tree stores each corner point of each triangle
+//#define SAVE_TRIANGLES        // kd-tree stores the center of each triangle as point
+#define SAVE_CORNERS            // kd-tree stores each corner point of each triangle
 #define EPSILON 0.0000001       // minimum allowed difference for points to determine equality
+#define USE_FIRST_AXIS         // if set, takes the first splitting axis more have the same extent
 
 // defines wheter use a stack inorder depth first search oder a queue for breadth first search
 #define QUEUE
@@ -165,6 +169,11 @@ struct Ray
     {
     }
 
+    Ray (float dirX, float dirY, float dirZ, float origX = 0, float origY = 0, float origZ = 0)
+        : origin(glm::vec3(origX, origY, origZ)), dir(glm::vec3(dirX, dirY, dirZ))
+    {
+    }
+
     // Ray-triangle-intersection with the Möller–Trumbore algorithm
     /*bool intersects (Triangle& triangle, glm::vec3& hit, float t)
     {
@@ -191,13 +200,9 @@ struct Ray
         glm::vec3 h = glm::cross(dir, edge31);
         float a = glm::dot(edge21, h);
 
-        if (abs(a) < EPSILON) return false; // This ray is parallel to this triangle.
-
-        // it we are parallel to the triangle return false
-        if (std::abs(a) < EPSILON)
-        {
-            return false;
-        }
+        // parallel to the triangle so return false
+        //if (abs(a) < EPSILON) return false;
+        if (std::abs(a) < EPSILON) return false;
 
         float f = 1.0f / a;
         glm::vec3 s = origin - pt1;
