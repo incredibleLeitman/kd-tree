@@ -5,7 +5,9 @@
 
 // #define GLFW_INCLUDE_NONE before including GLFW, or include glad bfore including glfw.
 #include <GLFW/glfw3.h>
-#include <chrono>
+#ifdef DEBUG_OUTPUT
+	#include <chrono>
+#endif
 #if defined(QUEUE)
 	#include <queue>
 #elif defined(STACK)
@@ -178,34 +180,6 @@ void Vis::display ()
 		glm::mat4 model = glm::mat4(1.0f);
 		_shader->setMat4("model", model);
 
-		// render raycast line for easier targeting
-		// TODO: use point
-		// -----------------------------------------------------
-		// move to init
-		/*_shader->setVec3("color", glm::vec3(0.0f, 1.0f, 0.0f));
-		float line2[] =
-		{
-			_cam->Position.x, _cam->Position.y + 0.0001f, _cam->Position.z,
-			_cam->Front.x * MAX_DIM, _cam->Front.y * MAX_DIM, _cam->Front.z * MAX_DIM
-		};
-		glGenVertexArrays(1, &VAOLine);
-		glGenBuffers(1, &VBOLine);
-		glBindVertexArray(VAOLine);
-
-		glBindBuffer(GL_ARRAY_BUFFER, VBOLine);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(line2), line2, GL_STATIC_DRAW);
-
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(0);
-
-		// unbind the VAO so other VAO calls won't accidentally modify this VAO
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
-		// -----------------------------------------------------
-
-		glBindVertexArray(VAOLine);
-		glDrawArrays(GL_LINES, 0, 2);*/
-
 		// render triangle if hit
 		if (_triangle != nullptr)
 		{
@@ -314,8 +288,10 @@ void Vis::display ()
 				glDrawArrays(GL_LINE_STRIP, 0, 16);
 			}*/
 
-			auto start = std::chrono::high_resolution_clock::now();
-			std::cout << "iterating all splitting planes";
+			#ifdef DEBUG_OUTPUT
+				auto start = std::chrono::high_resolution_clock::now();
+				std::cout << "iterating all splitting planes";
+			#endif
 
 			#if defined(QUEUE)
 				// breadth first non-recursive traversion of kd-tree
@@ -361,7 +337,9 @@ void Vis::display ()
 				}
 			#endif
 
-			std::cout << " took " << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() << " microseconds" << std::endl;
+			#ifdef DEBUG_OUTPUT
+				std::cout << " took " << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() << " microseconds" << std::endl;
+			#endif
 		}
 
 		glfwSwapBuffers(_window);
