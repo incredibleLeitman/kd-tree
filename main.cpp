@@ -8,7 +8,16 @@
 #include <iostream>
 #include <chrono>
 
-int main(int argc, char* argv[])
+int raycast (KDTree& tree, Ray& ray)
+{
+	const Triangle* triangle = tree.raycast(ray);
+	std::cout << "hit triangle: " << (triangle ? triangle->toString() : "nullptr") << std::endl;
+
+	triangle = tree.bruteforce(ray);
+	std::cout << "hit triangle: " << (triangle ? triangle->toString() : "nullptr") << std::endl;
+}
+
+int main (int argc, char* argv[])
 {
 	std::cout << "ALGO assignment \"kd-tree\"\n=============================\n" << std::endl;
 
@@ -17,7 +26,7 @@ int main(int argc, char* argv[])
 	// -v                   mode with enabled visualization
 	// -f <filename>        read triangle points from file
 	// --rngcount <count>   generates count random float values
-	bool vis = true;
+	bool vis = false;
 	std::string fileRnd = "";
 	uint32_t count = 0;
 	//uint32_t runs = 0;
@@ -38,7 +47,7 @@ int main(int argc, char* argv[])
 	//fileRnd = "icosphere.obj";
 	//fileRnd = "sphere.obj";
 	//fileRnd = "noobPot.obj";
-	count = 100000;
+	count = 1000000;
 
 	std::vector<float> triangleVertices;
 	if (fileRnd.empty() == false) // read points from given file
@@ -164,32 +173,22 @@ int main(int argc, char* argv[])
 			std::cin >> input;
 			if (input == 'r')
 			{
-				// TODO: add ctor (or better raycast function overload) for float vector
 				std::vector<float> point = PointGenerator::generate_3dpoint();
-				std::cout << "testing intersection from 0, 0, 0 - " << point[0] << ", " << point[1] << ", " << point[2] << std::endl;
-				Ray ray(glm::vec3(point[0], point[1], point[2]));
-
-				const Triangle *triangle = tree.raycast(ray);
-				std::cout << "hit triangle: " << (triangle ? triangle->toString() : "nullptr") << std::endl;
-
-				triangle = tree.bruteforce(ray);
-				std::cout << "hit triangle: " << (triangle ? triangle->toString() : "nullptr") << std::endl;
+				std::cout << "testing intersection from " <<
+					"0, 0, 0 - " <<
+					point[0] << ", " << point[1] << ", " << point[2] << std::endl;
+				Ray ray(point[0], point[1], point[2]);
+				raycast(tree, ray);
 			}
 			else if (input == 'c')
 			{
-				// TODO: add ctor (or better raycast function overload) for float vector
 				std::vector<float> dir = PointGenerator::generate_3dpoint();
 				std::vector<float> from = PointGenerator::generate_3dpoint();
 				std::cout << "testing intersection from " <<
 					dir[0] << ", " << dir[1] << ", " << dir[2] << " - " <<
 					from[0] << ", " << from[1] << ", " << from[2] << std::endl;
-				Ray ray((glm::vec3(dir[0], dir[1], dir[2]), glm::vec3(from[0], from[1], from[2])));
-
-				const Triangle* triangle = tree.raycast(ray);
-				std::cout << "hit triangle: " << (triangle ? triangle->toString() : "nullptr") << std::endl;
-
-				triangle = tree.bruteforce(ray);
-				std::cout << "hit triangle: " << (triangle ? triangle->toString() : "nullptr") << std::endl;
+				Ray ray(dir[0], dir[1], dir[2], from[0], from[1], from[2]);
+				raycast(tree, ray);
 			}
 		}
 	}
