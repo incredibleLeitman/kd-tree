@@ -12,6 +12,7 @@ private:
     Node* _root;
     uint32_t _nodes = 0; // total amount of nodes
     uint32_t _depth = 0; // maximum depth
+    uint32_t _iterated = 0; // count of iterated nodes for raycast
 
 public:
     KDTree (float *vertices, size_t size);
@@ -19,7 +20,7 @@ public:
     void print ();
     Node* root ();
 
-    const Triangle* raycast (const Ray ray) const;
+    const Triangle* raycast (const Ray ray);
     const Triangle* bruteforce (const Ray ray) const;
 
 //protected:
@@ -34,6 +35,6 @@ private:
     //Node* build(float* points, uint32_t size, uint32_t depth);
 
     void printNode (Node& node);
-    void raycastNode (Node* node, const Triangle*& nearest_triangle, glm::vec3& result, const Ray& ray, float& nearest, uint32_t& iterated) const;
+    void raycastNode (Node* node, const Triangle*& nearest_triangle, glm::vec3& result, const Ray& ray, float& nearest);
 };
 #endif // KDTREE_H
