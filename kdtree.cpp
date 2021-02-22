@@ -205,12 +205,12 @@ Node* KDTree::build (std::vector<Point*> &points, uint32_t depth)
 
 const Triangle* KDTree::raycast (const Ray ray)
 {
+    #ifdef USE_CACHE
+        _rayId++;
+    #endif
     std::cout << "testing intersection with ray " << std::endl;
     auto start = std::chrono::high_resolution_clock::now();
 
-    #if defined(USE_CACHE)
-        _rayId++;
-    #endif
     float nearest = MAX_DIM;
     const Triangle* nearest_triangle = nullptr;
     glm::vec3 result;
@@ -234,7 +234,7 @@ void KDTree::raycastNode (Node* node, const Triangle*& nearest_triangle, glm::ve
 #ifdef SAVE_CORNERS
     for (Triangle* triangle : node->pt->triangles)
     {
-        #if defined(USE_CACHE)
+        #ifdef USE_CACHE
             if (triangle->idxRay == _rayId) continue;
 
             triangle->idxRay = _rayId;
@@ -256,8 +256,7 @@ void KDTree::raycastNode (Node* node, const Triangle*& nearest_triangle, glm::ve
             result = current_result;
         }
     }
-
-#ifdef SAVE_CORNERS
+ #ifdef SAVE_CORNERS
     } // for each triangle
 #endif
 
@@ -288,8 +287,11 @@ void KDTree::raycastNode (Node* node, const Triangle*& nearest_triangle, glm::ve
 
 const Triangle* KDTree::bruteforce (Ray ray) const
 {
-    auto start = std::chrono::high_resolution_clock::now();
+    #ifdef USE_CACHE
+        _rayId++;
+    #endif
     std::cout << "brute force" << std::endl;
+    auto start = std::chrono::high_resolution_clock::now();
 
     // breadth first non-recursive traversion of kd-tree
     std::queue<Node*> q;
@@ -309,6 +311,12 @@ const Triangle* KDTree::bruteforce (Ray ray) const
     #ifdef SAVE_CORNERS
         for (const Triangle* triangle : cur->pt->triangles)
         {
+            #ifdef USE_CACHE
+                if (triangle->idxRay == _rayId) continue;
+
+                triangle->idxRay = _rayId;
+            #endif
+
             if (ray.intersects(triangle, current_result, current_distance))
     #else
         if (ray.intersects(cur->pt->triangle, current_result, current_distance))
@@ -325,7 +333,6 @@ const Triangle* KDTree::bruteforce (Ray ray) const
             }
             //break; // can not break because another node may be closer!
         }
-
     #ifdef SAVE_CORNERS
         } // for each triangle
     #endif
