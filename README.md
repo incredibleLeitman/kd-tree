@@ -56,12 +56,12 @@ std provides a combined minmax_element which calculates min and max together ins
 
 | triangles        | seperate (msvc)       | combined (msvc)          | seperate (gcc)       | combined (gcc)          |
 | ------------- |:-------------:|:-----:|:-------------:| -----:|
-|    10.000      |    6546 |    4771 | | |
-|   100.000      |   77366 |   69256 | | |
-| 1.000.000      | 1319135 | 1035246 | | |
-| sphere         |     122 |     140 | | |
-| monkey         |     264 |     373 | | |
-| noobPot        |    3094 |    2468 | | |
+|    10.000      |    6546 |    4771 | 3147 | 3585 |
+|   100.000      |   77366 |   69256 | 48785 | 53292 |
+| 1.000.000      | 1319135 | 1035246 | 1022325 | 896311 |
+| sphere         |     122 |     140 | 62 | 77 |
+| monkey         |     264 |     373 | 139 | 164 |
+| noobPot        |    3094 |    2468 | 1691 | 1991 |
 
 #### store corners vs center of triangles
 
@@ -69,12 +69,12 @@ Although storing center points of all triangles need less memory than storing al
 
 | triangles        | corners (msvc)       | center (msvc)          | corners (gcc)       | center (gcc)          |
 | ------------- |:-------------:|:-----:|:-------------:| -----:|
-|    10.000      | 19490 | | | |
-|   100.000      | 271903 | | | |
-| 1.000.000      | 4031645 | | | |
-| sphere         | 348 | | | |
-| monkey         | 668 | | | |
-| noobPot        | 5064 | | | |
+|    10.000      | 19490 | 5536 | 3102 | 2923 |
+|   100.000      | 271903 | 76847 | 48210 | 48391 |
+| 1.000.000      | 4031645 | 1258584 | 977806 | 988066 |
+| sphere         | 348 | 129 | 73 | 70 |
+| monkey         | 668 | 271 | 153 | 138 |
+| noobPot        | 5064 | 2958 | 1677 | 1719 |
 
 ### raytracing
 
