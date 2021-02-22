@@ -87,7 +87,7 @@ x...  mode with stored triangle center
 o...  mode with stored corner points
 +c... cache enabled
 
-| triangles        | raycast x (msvc)       | bruteforce x (msvc)          | raycast o (msvc)       | raycast o+c (msvc)       | bruteforce o (msvc)          || bruteforce o+c (msvc)          |
+| triangles        | raycast x (msvc)       | bruteforce x (msvc)          | raycast o (msvc)       | raycast o+c (msvc)       | bruteforce o (msvc)          | bruteforce o+c (msvc)          |
 | ------------- |:-------------:|:-----:|:-----:|:-----:|:-------------:| -----:|
 |    10.000      | | | 647 | 692 | | |
 |   100.000      | | | 3036| 3290 | | |
