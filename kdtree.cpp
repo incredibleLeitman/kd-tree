@@ -4,7 +4,9 @@
 #include <chrono>
 #include <iostream>
 #include <queue>
-#include <set>
+#ifdef SAVE_CORNERS
+    #include <set>
+#endif
 
 // comparator lambda for axis dependent comparison
 static auto axis_comparator (Axis axis)
@@ -15,9 +17,11 @@ static auto axis_comparator (Axis axis)
     };
 }
 
-// lambda for point comparator and settype for fast contains check
-static auto point_comparator = [](const Point* lhs, const Point* rhs) { return (*lhs != *rhs); };
-typedef std::set<Point*, decltype(point_comparator)> SetType;
+#ifdef SAVE_CORNERS
+    // lambda for point comparator and settype for fast contains check
+    static auto point_comparator = [](const Point* lhs, const Point* rhs) { return (*lhs != *rhs); };
+    typedef std::set<Point*, decltype(point_comparator)> SetType;
+#endif
 
 KDTree::KDTree (float *vertices, size_t count)
     :_depth(0)
