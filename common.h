@@ -3,11 +3,8 @@
 #define COMMON_H
 
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtc/quaternion.hpp>
-#include <glm/gtx/quaternion.hpp>
 #include <string>
+#include <vector>
 
 // --------------------------------------------------------------------------------
 // Considerations...
@@ -26,6 +23,7 @@
 // --------------------------------------------------------------------------------
 // - show raycast hit as point or omit the param
 // - add bounding boxes display to vis in addition to splitting planes
+// - set maximum leaf node count (also if max_depth is exceeded)
 
 // REFACTOR:
 // --------------------------------------------------------------------------------
@@ -36,13 +34,13 @@
 // --------------------------------------------------------------------------------
 
 #define SEPERATE_MIN_MAX        // use seperate min_element/max_element instead of combined minmax_element
-//#define DEBUG_OUTPUT            // prints debug output
+//#define DEBUG_OUTPUT          // prints debug output
 #define MAX_DEPTH 500           // sets maximum depth for kd-tree nodes
 #define MAX_DIM 100             // maximum dimension for scene extent
 //#define SAVE_TRIANGLES        // kd-tree stores the center of each triangle as point
 #define SAVE_CORNERS            // kd-tree stores each corner point of each triangle
 #define EPSILON 0.0000001       // minimum allowed difference for points to determine equality
-#define USE_FIRST_AXIS         // if set, takes the first splitting axis more have the same extent
+#define USE_FIRST_AXIS          // if set, takes the first splitting axis more have the same extent
 
 // defines wheter use a stack inorder depth first search oder a queue for breadth first search
 #define QUEUE
@@ -92,6 +90,12 @@ public:
     float operator[](Axis i) const { return coords[(int)i]; }
     const float& operator[](Axis i) { return coords[(int)i]; }
 
+    // operator for value comparison
+    bool operator == (const Point& rhs)
+    {
+        return coords[0] == rhs.coords[0] && coords[1] == rhs.coords[1] && coords[2] == rhs.coords[2];
+    }
+
     float dim (Axis axis) const
     {
         return coords[(int)axis];
@@ -109,8 +113,11 @@ public:
         return glm::vec3(coords[0], coords[1], coords[2]);
     }
 
-    // TODO: make list of triangles?
-    Triangle* triangle = nullptr;
+    #ifdef SAVE_CORNERS
+        std::vector<Triangle*> triangles;
+    #else
+        Triangle* triangle = nullptr;
+    #endif
 };
 
 // collection for point triple to represent a triangle
@@ -179,12 +186,12 @@ struct Ray
     {
         return intersects(*triangle.points[0], *triangle.points[1], *triangle.points[2], hit, t);
     }*/
-    bool intersects (Triangle* triangle, glm::vec3& hit, float &t) const
+    bool intersects (const Triangle* triangle, glm::vec3& hit, float &t) const
     {
         return intersects(*triangle->points[0], *triangle->points[1], *triangle->points[2], hit, t);
     }
 
-    bool intersects (Point &pt1, Point& pt2, Point& pt3, glm::vec3& hit, float &t) const
+    bool intersects (const Point &pt1, const Point& pt2, const Point& pt3, glm::vec3& hit, float &t) const
     {
         return intersects(pt1.toVec3(), pt2.toVec3(), pt3.toVec3(), hit, t);
     }
