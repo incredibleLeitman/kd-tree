@@ -8,7 +8,7 @@
 #include <iostream>
 #include <chrono>
 
-int raycast (KDTree& tree, Ray& ray)
+void raycast (KDTree& tree, Ray& ray)
 {
 	const Triangle* triangle = tree.raycast(ray);
 	std::cout << "hit triangle: " << (triangle ? triangle->toString() : "nullptr") << std::endl;
@@ -26,28 +26,27 @@ int main (int argc, char* argv[])
 	// -v                   mode with enabled visualization
 	// -f <filename>        read triangle points from file
 	// --rngcount <count>   generates count random float values
-	bool vis = false;
-	std::string fileRnd = "";
-	uint32_t count = 0;
+	bool vis = true;
 	//uint32_t runs = 0;
-
-	// TODO: add params:
-	// -runs <count>        runs performance mode multiple times
-	for (int i = 0; i < argc; ++i)
-	{
-		if (strcmp(argv[i], "-v") == 0) vis = true;
-		else if (strcmp(argv[i], "-f") == 0) fileRnd = argv[i + 1];
-		else if (strcmp(argv[i], "--rngcount") == 0) count = std::stoi(argv[i + 1]);
-		//else if (strcmp(argv[i], "--runs") == 0) runs = std::stoi(argv[i + 1]);
-	}
-
+	std::string fileRnd = "";
 	//fileRnd = "Monkey.obj";
 	//fileRnd = "MonkeySimple.obj";
 	//fileRnd = "nubian_complex.obj";
 	//fileRnd = "icosphere.obj";
 	//fileRnd = "sphere.obj";
 	//fileRnd = "noobPot.obj";
-	count = 1000000;
+	uint32_t count = 10000;
+
+	// TODO: add params:
+	// -runs <count>        runs performance mode multiple times
+	for (int i = 0; i < argc; ++i)
+	{
+		if (strcmp(argv[i], "-v") == 0) vis = true;
+		else if (strcmp(argv[i], "-p") == 0) vis = false;
+		else if (strcmp(argv[i], "-f") == 0) fileRnd = argv[i + 1];
+		else if (strcmp(argv[i], "--rngcount") == 0) count = std::stoi(argv[i + 1]);
+		//else if (strcmp(argv[i], "--runs") == 0) runs = std::stoi(argv[i + 1]);
+	}
 
 	std::vector<float> triangleVertices;
 	if (fileRnd.empty() == false) // read points from given file
