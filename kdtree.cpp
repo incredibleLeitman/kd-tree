@@ -7,7 +7,7 @@
 #include <set>
 
 // comparator lambda for axis dependent comparison
-static auto axis_comparator(Axis axis)
+static auto axis_comparator (Axis axis)
 {
     return [axis](Point* p1, Point* p2)
     {
@@ -15,7 +15,9 @@ static auto axis_comparator(Axis axis)
     };
 }
 
+// lambda for point comparator and settype for fast contains check
 static auto point_comparator = [](const Point* lhs, const Point* rhs) { return (*lhs != *rhs); };
+typedef std::set<Point*, decltype(point_comparator)> SetType;
 
 KDTree::KDTree (float *vertices, size_t count)
     :_depth(0)
@@ -46,18 +48,7 @@ KDTree::KDTree (float *vertices, size_t count)
     // notes on  a few tests:
     // - not specifying size and just adding points doesn't decreases performance
     // - checking for existing points happens for standard meshes and also doesn't costs performance
-
-    // EDIT: use set instead of vector for faster contains check
-    //typedef std::set<Point*> SetType;
-    //typedef std::set<Point*, point_comparator> SetType; // 98304 for 1000000
-    //SetType mPoints;
-    //SetType::iterator it2;
-
-    //auto comp = [](const Point* lhs, const Point* rhs) { return (*f1 != *f2); };
-    //std::set<Point*, decltype(comp)> mPoints(comp);
-    //std::set<Point*, decltype(comp)>::iterator it2;
-
-    typedef std::set<Point*, decltype(point_comparator)> SetType;
+    // - find -> insert if not found vs. try insert -> find if failed => makes no difference for up to 1 mio triangles
     SetType mPoints(point_comparator);
     SetType::iterator it2;
 
@@ -69,41 +60,8 @@ KDTree::KDTree (float *vertices, size_t count)
         size_t idx_pt = idx/3;
         Point *pt = new Point(vertices[idx], vertices[idx + 1], vertices[idx + 2]);
 
-        /*===========================================================
-        if (false == mPoints.insert(pt).second)
-        {
-            pt = *std::find_if(std::begin(mPoints), std::end(mPoints), [pt](const Point* cand) {return (*cand == *pt); }); // update exisiting point
-        }
-        ===========================================================*/
-
-        /*
-        //std::vector<Point*>::iterator it = std::count(points.begin(), points.end(), pt);
-        //std::vector<Point*>::iterator it = std::find(points.begin(), points.end(), pt);
-        std::vector<Point*>::iterator it = std::find_if(std::begin(points), std::end(points), [pt](Point* cand) {return (*cand == *pt); });
-        if (it == points.end()) points.push_back(pt);
-        else pt = *it;
-        */
-
-        // - find only searches for pointer identity
-        // - find_if is unusably slow for random triangles (no overlapping)
-        // -> try insert, if fails get reference
-        //it2 = mPoints.find(pt);
-        /*it2 = std::find_if(std::begin(mPoints), std::end(mPoints), [pt](Point* cand) {return (*cand == *pt); });
-        if (it2 == mPoints.end()) mPoints.insert(pt); // TODO: check .second if insertion was successfull
-        else pt = *it2; // update exisiting point*/
-
-
-        /* works too
-        if (false == mPoints.insert(pt).second)
-        {
-            pt = *mPoints.find(pt);
-        }
-        */
-
-        // TODO: compare find -> insert if not present vs insert failed -> get reference
-        it2 = mPoints.find(pt);
-        if (it2 == mPoints.end()) mPoints.insert(pt); // TODO: check .second if insertion was successfull
-        else pt = *it2; // update exisiting point
+        // if insertion fails (already present) use existing point
+        if (false == mPoints.insert(pt).second) pt = *mPoints.find(pt);
 
         uint8_t mod = (idx_pt + 1) % 3;
         if (mod == 1)       A = pt;
