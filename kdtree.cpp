@@ -39,21 +39,40 @@ KDTree::KDTree (float *vertices, size_t count)
 #elif defined(SAVE_CORNERS)
     // conversion from float[] to vector<Point*>
     // add every single point of the triangle
-    std::vector<Point*> points(count/3);
+
+    // notes on  a few tests:
+    // - not specifying size and just adding points doesn't decreases performance
+    // - checking for existing points happens for standard meshes and also doesn't costs performance
+    std::vector<Point*> points;
+    Point *A = nullptr;
+    Point* B = nullptr;
+    Point* C = nullptr;
     for (uint32_t idx = 0; idx < count; idx += 3)
     {
         size_t idx_pt = idx/3;
-        points[idx_pt] = new Point(vertices[idx], vertices[idx + 1], vertices[idx + 2]);
-        if ((idx_pt + 1) % 3 == 0)
+        Point *pt = new Point(vertices[idx], vertices[idx + 1], vertices[idx + 2]);
+        //std::vector<Point*>::iterator it = std::count(points.begin(), points.end(), pt);
+        //std::vector<Point*>::iterator it = std::find(points.begin(), points.end(), pt);
+        std::vector<Point*>::iterator it = std::find_if(std::begin(points), std::end(points), [pt](Point* cand) {return (*cand == *pt); });
+        if (it == points.end()) points.push_back(pt);
+        else pt = *it;
+
+        uint8_t mod = (idx_pt + 1) % 3;
+        if (mod == 1)       A = pt;
+        else if (mod == 2)  B = pt;
+        else if (mod == 0)
         {
+            C = pt;
+
             // create the resulting triangle afterwards and set reference to all points
-            Triangle* triangle = new Triangle(points[idx_pt - 2], points[idx_pt - 1], points[idx_pt]);
-            points[idx_pt - 2]->triangle = triangle;
-            points[idx_pt - 1]->triangle = triangle;
-            points[idx_pt]->triangle = triangle;
+            Triangle* triangle = new Triangle(A, B, C);
+            A->triangles.push_back(triangle);
+            B->triangles.push_back(triangle);
+            C->triangles.push_back(triangle);
         }
     }
 #endif
+
     auto start = std::chrono::high_resolution_clock::now();
     _root = build(points, 0);
     std::cout << "\ttook\t\t" << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() << " microseconds" << std::endl;
@@ -196,17 +215,30 @@ void KDTree::raycastNode (Node* node, const Triangle*& nearest_triangle, glm::ve
     // if a collision it detected, that is closer to the ray origin than the closest previous collision, store it
     glm::vec3 current_result(0, 0, 0);
     float current_distance;
-    // TODO: iterate over all triangles which this point is involved in
-    //for (const Triangle* triangle : node->pt->triangles)
+
+#ifdef SAVE_CORNERS
+    for (const Triangle* triangle : node->pt->triangles)
+    {
+        if (ray.intersects(triangle, current_result, current_distance))
+#else
     if (ray.intersects(node->pt->triangle, current_result, current_distance))
+#endif
     {
         if (current_distance < nearest)
         {
             nearest = current_distance;
-            nearest_triangle = node->pt->triangle;
+            #ifdef SAVE_CORNERS
+                nearest_triangle = triangle;
+            #else
+                nearest_triangle = node->pt->triangle;
+            #endif
             result = current_result;
         }
     }
+
+#ifdef SAVE_CORNERS
+    } // for each triangle
+#endif
 
     // Is the ray origin within the left or right child node bounding box?
     Node* near = ray.origin[node->axis] > node->pt->dim(node->axis) ? node->right : node->left;
@@ -240,7 +272,7 @@ const Triangle* KDTree::bruteforce (Ray ray) const
 
     // breadth first non-recursive traversion of kd-tree
     std::queue<Node*> q;
-    const Triangle* triangle = nullptr;
+    const Triangle* nearest_triangle = nullptr;
     Node* cur = _root;
     q.push(cur);
     uint32_t nodes = 0;
@@ -253,20 +285,33 @@ const Triangle* KDTree::bruteforce (Ray ray) const
         cur = q.front();
         q.pop();
 
-        //for (auto triangle : cur->pt->triangles)
+    #ifdef SAVE_CORNERS
+        for (const Triangle* triangle : cur->pt->triangles)
+        {
+            if (ray.intersects(triangle, current_result, current_distance))
+    #else
         if (ray.intersects(cur->pt->triangle, current_result, current_distance))
+    #endif
         {
             if (current_distance < nearest)
             {
                 nearest = current_distance;
-                triangle = cur->pt->triangle;
+                #ifdef SAVE_CORNERS
+                    nearest_triangle = triangle;
+                #else
+                    nearest_triangle = cur->pt->triangle;
+                #endif
             }
             //break; // can not break because another node may be closer!
         }
+
+    #ifdef SAVE_CORNERS
+        } // for each triangle
+    #endif
 
         if (cur->left) q.push(cur->left);
         if (cur->right) q.push(cur->right);
     }
     std::cout << "\tneeded\t\t" << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() << " microseconds" << std::endl;
-    return triangle;
+    return nearest_triangle;
 }
