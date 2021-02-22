@@ -16,7 +16,7 @@ place header file in the "include" folder, libraries in "lib", the file "glad.c"
 ## commandline arguments
 
 - -v                    starts with visualization if provided (else just commandline)
-- -p                    starts in performance mode (just cmd), overrided -v flag
+- -p                    starts in performance mode (just cmd), overrides -v flag
 - -f <file>             loads vertices from given file (.obj file format)
 - --rngcount <count>    generates the given amount of random triangles
 
@@ -40,7 +40,7 @@ place header file in the "include" folder, libraries in "lib", the file "glad.c"
 
 ## timings
 
-all timing data were recorded in x64 release mode using Microsoft Visual C++ and Gnu compiler (with -O3 flag) and averaged for at least 10 iterations, specification in microseconds.
+all timing data were recorded in x64 release mode using Microsoft Visual C++ and Gnu compiler (with -O3 flag) and averaged for at least 10 iterations, specification in microseconds. (Processor: Intel Core i7-6700K @4GHz)
 
 Additionally to random generated triangles, the following mesh files were used:
 - sphere (Vertices: 960)
@@ -69,51 +69,32 @@ Although storing center points of all triangles need less memory than storing al
 
 | triangles        | corners (msvc)       | center (msvc)          | corners (gcc)       | center (gcc)          |
 | ------------- |:-------------:|:-----:|:-------------:| -----:|
-|    10.000      | | | | |
-|   100.000      | | | | |
-| 1.000.000      | | | | |
-| sphere         | | | | |
-| monkey         | | | | |
-| noobPot        | | | | |
+|    10.000      | 19490 | | | |
+|   100.000      | 271903 | | | |
+| 1.000.000      | 4031645 | | | |
+| sphere         | 348 | | | |
+| monkey         | 668 | | | |
+| noobPot        | 5064 | | | |
 
 ### raytracing
 
-The big advantage of a kd-tree is, that compared to a simple bruteforce variant, ther stored data is ordered, thus not all nodes have to be iterated to find the nearest intersection, which leads to much faster timings.
-
-| triangles        | raycast (msvc)       | bruteforce (msvc)          | raycast (gcc)       | bruteforce (gcc)          |
-| ------------- |:-------------:|:-----:|:-------------:| -----:|
-|    10.000      | | | | |
-|   100.000      | | | | |
-| 1.000.000      | | | | |
-| sphere         | | | | |
-| monkey         | | | | |
-| noobPot        | | | | |
-
-#### caching already tested triangles for corner storing mode
+The big advantage of a kd-tree is, that compared to a simple bruteforce variant, the stored data is spatially ordered, thus not all nodes have to be iterated to find the nearest intersection, which leads to much faster timings.
 
 Because in corner storing mode multiple triangles are tested for each point, the performance can be increased if a cache is setup.
 As shown, this has a minor performance gain for the tested mesh files, but almost no impact for random generated triangles, as there are no shared triangles between all points.
 
-| triangles        | disabled (msvc)       | enabled (msvc)          | disabled (gcc)       | enabled (gcc)          |
-| ------------- |:-------------:|:-----:|:-------------:| -----:|
-|    10.000      | 647 | 692 | | |
-|   100.000      | 3036| 3290 | | |
-| 1.000.000      | 13526| 24444 | | |
-| sphere         | 27 | 21 | | |
-| monkey         | 37 | 31 | | |
-| noobPot        | 334 | 230 | | |
+x...  mode with stored triangle center
+o...  mode with stored corner points
++c... cache enabled
 
-
-#### store corners vs center of triangles
-
-| triangles        | corners (msvc)       | center (msvc)          | corners (gcc)       | center (gcc)          |
-| ------------- |:-------------:|:-----:|:-------------:| -----:|
-|    10.000      | | | | |
-|   100.000      | | | | |
-| 1.000.000      | | | | |
-| sphere         | | | | |
-| monkey         | | | | |
-| noobPot        | | | | |
+| triangles        | raycast x (msvc)       | bruteforce x (msvc)          | raycast o (msvc)       | raycast o+c (msvc)       | bruteforce o (msvc)          || bruteforce o+c (msvc)          |
+| ------------- |:-------------:|:-----:|:-----:|:-----:|:-------------:| -----:|
+|    10.000      | | | 647 | 692 | | |
+|   100.000      | | | 3036| 3290 | | |
+| 1.000.000      | | | 13526| 24444 | | |
+| sphere         | | | 27 | 21 | | |
+| monkey         | | | 37 | 31 | | |
+| noobPot        | | | 334 | 230 | | |
 
 
 ### misc (TODO)
