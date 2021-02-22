@@ -35,7 +35,7 @@ int main (int argc, char* argv[])
 	//fileRnd = "icosphere.obj";
 	//fileRnd = "sphere.obj";
 	//fileRnd = "noobPot.obj";
-	uint32_t count = 10000;
+	uint32_t count = 1000000;
 
 	// TODO: add params:
 	// -runs <count>        runs performance mode multiple times

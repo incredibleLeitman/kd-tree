@@ -24,6 +24,7 @@
 // - show raycast hit as point or omit the param
 // - add bounding boxes display to vis in addition to splitting planes
 // - set maximum leaf node count (also if max_depth is exceeded)
+// - for corner storage to be efficient need to use a map instead of vector -> search O(1) instead of O(n)
 
 // REFACTOR:
 // --------------------------------------------------------------------------------
@@ -41,6 +42,7 @@
 #define SAVE_CORNERS            // kd-tree stores each corner point of each triangle
 #define EPSILON 0.0000001       // minimum allowed difference for points to determine equality
 #define USE_FIRST_AXIS          // if set, takes the first splitting axis more have the same extent
+#define USE_CACHE               // marks triangles as checked (for corner store mode)
 
 // defines wheter use a stack inorder depth first search oder a queue for breadth first search
 #define QUEUE
@@ -91,10 +93,8 @@ public:
     const float& operator[](Axis i) { return coords[(int)i]; }
 
     // operator for value comparison
-    bool operator == (const Point& rhs)
-    {
-        return coords[0] == rhs.coords[0] && coords[1] == rhs.coords[1] && coords[2] == rhs.coords[2];
-    }
+    bool operator != (const Point& rhs) { return coords[0] != rhs.coords[0] || coords[1] != rhs.coords[1] || coords[2] != rhs.coords[2]; }
+    bool operator != (const Point& rhs) const { return coords[0] != rhs.coords[0] || coords[1] != rhs.coords[1] || coords[2] != rhs.coords[2]; }
 
     float dim (Axis axis) const
     {
@@ -137,6 +137,10 @@ struct Triangle
     {
         return points[0]->toString() + ", " + points[1]->toString() + ", " + points[2]->toString();
     }
+
+#if defined(SAVE_CORNERS) && defined(USE_CACHE)
+    uint8_t idxRay = 0; // used to cache triangle check for raycast id
+#endif
 };
 
 // represent a node of the tree
@@ -182,10 +186,7 @@ struct Ray
     }
 
     // Ray-triangle-intersection with the Möller–Trumbore algorithm
-    /*bool intersects (Triangle& triangle, glm::vec3& hit, float t)
-    {
-        return intersects(*triangle.points[0], *triangle.points[1], *triangle.points[2], hit, t);
-    }*/
+    //bool intersects (Triangle& triangle, glm::vec3& hit, float t)
     bool intersects (const Triangle* triangle, glm::vec3& hit, float &t) const
     {
         return intersects(*triangle->points[0], *triangle->points[1], *triangle->points[2], hit, t);
@@ -208,8 +209,7 @@ struct Ray
         float a = glm::dot(edge21, h);
 
         // parallel to the triangle so return false
-        //if (abs(a) < EPSILON) return false;
-        if (std::abs(a) < EPSILON) return false;
+        if (abs(a) < EPSILON) return false;
 
         float f = 1.0f / a;
         glm::vec3 s = origin - pt1;
@@ -221,16 +221,15 @@ struct Ray
         float v = f * glm::dot(dir, q);
         if (v < 0.0 || (u + v) > 1.0) return false;
 
-        // At this stage we can compute t to find out where the intersection point is on the line.
+        // compute t to find out where the intersection point is on the line
         t = f * glm::dot(edge31, q);
         if (t > EPSILON)
         {
             hit = origin + dir * t;
             return true;
         }
-        else
+        else // there is a line intersection but not a ray intersection.
         {
-            // This means that there is a line intersection but not a ray intersection.
             return false;
         }
     }

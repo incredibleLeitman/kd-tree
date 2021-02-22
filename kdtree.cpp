@@ -4,6 +4,7 @@
 #include <chrono>
 #include <iostream>
 #include <queue>
+#include <set>
 
 // comparator lambda for axis dependent comparison
 static auto axis_comparator(Axis axis)
@@ -14,10 +15,12 @@ static auto axis_comparator(Axis axis)
     };
 }
 
+static auto point_comparator = [](const Point* lhs, const Point* rhs) { return (*lhs != *rhs); };
+
 KDTree::KDTree (float *vertices, size_t count)
     :_depth(0)
 {
-    std::cout << "building kd-tree with " << count << " points..." << std::endl;
+    std::cout << "building kd-tree with " << count << " floats..." << std::endl;
     // - variant 1: build with arrays --> too much overhead
     //_root = build(vertices, count, 0);
 
@@ -43,19 +46,64 @@ KDTree::KDTree (float *vertices, size_t count)
     // notes on  a few tests:
     // - not specifying size and just adding points doesn't decreases performance
     // - checking for existing points happens for standard meshes and also doesn't costs performance
-    std::vector<Point*> points;
-    Point *A = nullptr;
+
+    // EDIT: use set instead of vector for faster contains check
+    //typedef std::set<Point*> SetType;
+    //typedef std::set<Point*, point_comparator> SetType; // 98304 for 1000000
+    //SetType mPoints;
+    //SetType::iterator it2;
+
+    //auto comp = [](const Point* lhs, const Point* rhs) { return (*f1 != *f2); };
+    //std::set<Point*, decltype(comp)> mPoints(comp);
+    //std::set<Point*, decltype(comp)>::iterator it2;
+
+    typedef std::set<Point*, decltype(point_comparator)> SetType;
+    SetType mPoints(point_comparator);
+    SetType::iterator it2;
+
+    Point* A = nullptr;
     Point* B = nullptr;
     Point* C = nullptr;
     for (uint32_t idx = 0; idx < count; idx += 3)
     {
         size_t idx_pt = idx/3;
         Point *pt = new Point(vertices[idx], vertices[idx + 1], vertices[idx + 2]);
+
+        /*===========================================================
+        if (false == mPoints.insert(pt).second)
+        {
+            pt = *std::find_if(std::begin(mPoints), std::end(mPoints), [pt](const Point* cand) {return (*cand == *pt); }); // update exisiting point
+        }
+        ===========================================================*/
+
+        /*
         //std::vector<Point*>::iterator it = std::count(points.begin(), points.end(), pt);
         //std::vector<Point*>::iterator it = std::find(points.begin(), points.end(), pt);
         std::vector<Point*>::iterator it = std::find_if(std::begin(points), std::end(points), [pt](Point* cand) {return (*cand == *pt); });
         if (it == points.end()) points.push_back(pt);
         else pt = *it;
+        */
+
+        // - find only searches for pointer identity
+        // - find_if is unusably slow for random triangles (no overlapping)
+        // -> try insert, if fails get reference
+        //it2 = mPoints.find(pt);
+        /*it2 = std::find_if(std::begin(mPoints), std::end(mPoints), [pt](Point* cand) {return (*cand == *pt); });
+        if (it2 == mPoints.end()) mPoints.insert(pt); // TODO: check .second if insertion was successfull
+        else pt = *it2; // update exisiting point*/
+
+
+        /* works too
+        if (false == mPoints.insert(pt).second)
+        {
+            pt = *mPoints.find(pt);
+        }
+        */
+
+        // TODO: compare find -> insert if not present vs insert failed -> get reference
+        it2 = mPoints.find(pt);
+        if (it2 == mPoints.end()) mPoints.insert(pt); // TODO: check .second if insertion was successfull
+        else pt = *it2; // update exisiting point
 
         uint8_t mod = (idx_pt + 1) % 3;
         if (mod == 1)       A = pt;
@@ -71,6 +119,8 @@ KDTree::KDTree (float *vertices, size_t count)
             C->triangles.push_back(triangle);
         }
     }
+    // map set of unique points to vector for kd-tree build method
+    std::vector<Point*> points(mPoints.begin(), mPoints.end());
 #endif
 
     auto start = std::chrono::high_resolution_clock::now();
@@ -196,6 +246,9 @@ const Triangle* KDTree::raycast (const Ray ray)
     std::cout << "testing intersection with ray " << std::endl;
     auto start = std::chrono::high_resolution_clock::now();
 
+    #if defined(USE_CACHE)
+        _rayId++;
+    #endif
     float nearest = MAX_DIM;
     const Triangle* nearest_triangle = nullptr;
     glm::vec3 result;
@@ -217,8 +270,14 @@ void KDTree::raycastNode (Node* node, const Triangle*& nearest_triangle, glm::ve
     float current_distance;
 
 #ifdef SAVE_CORNERS
-    for (const Triangle* triangle : node->pt->triangles)
+    for (Triangle* triangle : node->pt->triangles)
     {
+        #if defined(USE_CACHE)
+            if (triangle->idxRay == _rayId) continue;
+
+            triangle->idxRay = _rayId;
+        #endif
+
         if (ray.intersects(triangle, current_result, current_distance))
 #else
     if (ray.intersects(node->pt->triangle, current_result, current_distance))

@@ -13,6 +13,9 @@ private:
     uint32_t _nodes = 0; // total amount of nodes
     uint32_t _depth = 0; // maximum depth
     uint32_t _iterated = 0; // count of iterated nodes for raycast
+    #if defined(USE_CACHE)
+        uint8_t _rayId = 0; // increase raycast id each check to allow caching
+    #endif
 
 public:
     KDTree (float *vertices, size_t size);
