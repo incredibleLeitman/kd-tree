@@ -16,10 +16,13 @@ place header file in the "include" folder, libraries in "lib", the file "glad.c"
 ## commandline arguments
 
 - -v                    starts with visualization if provided (else just commandline)
+- -p                    starts in performance mode (just cmd), overrided -v flag
 - -f <file>             loads vertices from given file (.obj file format)
 - --rngcount <count>    generates the given amount of random triangles
 
 ## vis controls
+
+(only available for windows builds. May work if a desktop manager is available, but to build the include and lib folders have to be provided in the makefile)
 
 - move the observer camera with WASD keys
 - space bar to shoot a raycast in the current view direction
@@ -37,7 +40,7 @@ place header file in the "include" folder, libraries in "lib", the file "glad.c"
 
 ## timings
 
-all timing data were recorded in x64 release mode using Microsoft Visual C++ and Gnu compiler and averaged for at least 10 iterations, specification in microseconds.
+all timing data were recorded in x64 release mode using Microsoft Visual C++ and Gnu compiler (with -O3 flag) and averaged for at least 10 iterations, specification in microseconds.
 
 Additionally to random generated triangles, the following mesh files were used:
 - sphere (Vertices: 960)
@@ -46,10 +49,12 @@ Additionally to random generated triangles, the following mesh files were used:
 
 ### building the kd-tree
 
+#### std::minmax_element vs SEPERATE_MIN_MAX
+
 std provides a combined minmax_element which calculates min and max together instead of seperate calls to min_element and max_element, which could be used to get a performance increase for building the tree (as those are calculated for every node). The results however show, that there is almost no difference, using gcc seperate implementation even is slightly faster.
 
 
-| triangles        | seperate (msvc)       | combined (msvc)          | seperate (msvc)       | combined (msvc)          |
+| triangles        | seperate (msvc)       | combined (msvc)          | seperate (gcc)       | combined (gcc)          |
 | ------------- |:-------------:|:-----:|:-------------:| -----:|
 |    10.000      |    6546 |    4771 | | |
 |   100.000      |   77366 |   69256 | | |
@@ -58,11 +63,68 @@ std provides a combined minmax_element which calculates min and max together ins
 | monkey         |     264 |     373 | | |
 | noobPot        |    3094 |    2468 | | |
 
+#### store corners vs center of triangles
+
+Although storing center points of all triangles need less memory than storing all corner points and works well for random generated triangles when there is no overlapping, the mode for storing corners is more suitable for "real" meshes, where most points are connected to multiple triangles.
+
+| triangles        | corners (msvc)       | center (msvc)          | corners (gcc)       | center (gcc)          |
+| ------------- |:-------------:|:-----:|:-------------:| -----:|
+|    10.000      | | | | |
+|   100.000      | | | | |
+| 1.000.000      | | | | |
+| sphere         | | | | |
+| monkey         | | | | |
+| noobPot        | | | | |
+
 ### raytracing
 
+The big advantage of a kd-tree is, that compared to a simple bruteforce variant, ther stored data is ordered, thus not all nodes have to be iterated to find the nearest intersection, which leads to much faster timings.
+
+| triangles        | raycast (msvc)       | bruteforce (msvc)          | raycast (gcc)       | bruteforce (gcc)          |
+| ------------- |:-------------:|:-----:|:-------------:| -----:|
+|    10.000      | | | | |
+|   100.000      | | | | |
+| 1.000.000      | | | | |
+| sphere         | | | | |
+| monkey         | | | | |
+| noobPot        | | | | |
+
+#### caching already tested triangles for corner storing mode
+
+Because in corner storing mode multiple triangles are tested for each point, the performance can be increased if a cache is setup.
+As shown, this has a minor performance gain for the tested mesh files, but almost no impact for random generated triangles, as there are no shared triangles between all points.
+
+| triangles        | disabled (msvc)       | enabled (msvc)          | disabled (gcc)       | enabled (gcc)          |
+| ------------- |:-------------:|:-----:|:-------------:| -----:|
+|    10.000      | 647 | 692 | | |
+|   100.000      | 3036| 3290 | | |
+| 1.000.000      | 13526| 24444 | | |
+| sphere         | 27 | 21 | | |
+| monkey         | 37 | 31 | | |
+| noobPot        | 334 | 230 | | |
 
 
+#### store corners vs center of triangles
 
+| triangles        | corners (msvc)       | center (msvc)          | corners (gcc)       | center (gcc)          |
+| ------------- |:-------------:|:-----:|:-------------:| -----:|
+|    10.000      | | | | |
+|   100.000      | | | | |
+| 1.000.000      | | | | |
+| sphere         | | | | |
+| monkey         | | | | |
+| noobPot        | | | | |
+
+
+### misc (TODO)
+
+#### QUEUE vs STACK
+
+comparing non-recursive tree iteration using inorder depth first over breadth first search
+
+#### chrono in finally block
+
+checking if using chrono within a try or finally block makes a difference
 
 
 ## references
