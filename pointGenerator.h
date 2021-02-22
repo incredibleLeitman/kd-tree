@@ -2,14 +2,12 @@
 #ifndef POINT_GENERATOR_H
 #define POINT_GENERATOR_H
 
-#include <list>
 #include <cstdlib>  // for srand, rand
 #include <fstream> // ifstream
 #include <ctime> // time
 #include <string> // stoi
-//#include <iostream> // cin, cout
-//#include <algorithm>
-#include <OBJ_Loader.h>
+
+#include <OBJ_Loader.h> // used to load .obj files
 
 class PointGenerator
 {
@@ -28,7 +26,6 @@ public:
         }
     }
 
-    //static std::vector<Point*> read_file (const std::string& fileRnd)
     static std::vector<float> read_file (const std::string& fileRnd)
     {
         objl::Loader loader;
