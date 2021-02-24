@@ -25,12 +25,14 @@
 // - add bounding boxes display to vis in addition to splitting planes
 // - set maximum leaf node count (also if max_depth is exceeded)
 // - for corner storage to be efficient need to use a map instead of vector -> search O(1) instead of O(n)
+// - performance mode: parse vector input for custom point
 
 // REFACTOR:
 // --------------------------------------------------------------------------------
 // - Ray::intersect -> only use triangle struct; return t instead of storing in ref param
 // - outsource enums, structs and classes into own files
-// - replace custom Point class with glm::vec3 ?
+// - replace custom Point class with glm::vec3?
+// - replace macros with cmd args
 // - remove glm includes from common.h -> use implementation file
 // --------------------------------------------------------------------------------
 
@@ -38,11 +40,11 @@
 //#define DEBUG_OUTPUT          // prints debug output
 #define MAX_DEPTH 500           // sets maximum depth for kd-tree nodes
 #define MAX_DIM 100             // maximum dimension for scene extent
-//#define SAVE_TRIANGLES        // kd-tree stores the center of each triangle as point
-#define SAVE_CORNERS            // kd-tree stores each corner point of each triangle
+#define SAVE_TRIANGLES        // kd-tree stores the center of each triangle as point
+//#define SAVE_CORNERS            // kd-tree stores each corner point of each triangle
 #define EPSILON 0.0000001       // minimum allowed difference for points to determine equality
 #define USE_FIRST_AXIS          // if set, takes the first splitting axis more have the same extent
-#define USE_CACHE               // marks triangles as checked (for corner store mode)
+//#define USE_CACHE               // marks triangles as checked (for corner store mode)
 
 // defines wheter use a stack inorder depth first search oder a queue for breadth first search
 #define QUEUE

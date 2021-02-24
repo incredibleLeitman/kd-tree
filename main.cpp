@@ -170,6 +170,7 @@ int main (int argc, char* argv[])
 		while (input != 'x')
 		{
 			std::cin >> input;
+			// TODO: parse vector input for custom point
 			if (input == 'r')
 			{
 				std::vector<float> point = PointGenerator::generate_3dpoint();
