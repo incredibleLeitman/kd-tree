@@ -92,7 +92,7 @@ o...  mode with stored corner points
 
 msvc++
 
-| triangles        | raycast x       | bruteforce x          | raycast o       | raycast o+c       | bruteforce o          | bruteforce o+c           |
+| triangles        | raycast x       | bruteforce x          | raycast o       | bruteforce o       | raycast o+c          | bruteforce o+c           |
 | ------------- |:-------------:|:-----:|:-----:|:-----:|:-------------:| -----:|
 |    10.000      | 39 | 1053 | 647 | 692 | 132 | 4184 |
 |   100.000      | 74 | 20545 | 3036| 3290 | 326 | 56003 |
