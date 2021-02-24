@@ -83,11 +83,9 @@ The big advantage of a kd-tree is, that compared to a simple bruteforce variant,
 Because in corner storing mode multiple triangles are tested for each point, the performance can be increased if a cache is setup.
 As shown, this has a minor performance gain for the tested mesh files, but almost no impact for random generated triangles, as there are no shared triangles between all points.
 
-x...  mode with stored triangle center
-
-o...  mode with stored corner points
-
-+c... cache enabled
+- x...  mode with stored triangle center
+- o...  mode with stored corner points
+- +c... cache enabled
 
 
 msvc++
