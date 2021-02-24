@@ -84,17 +84,25 @@ Because in corner storing mode multiple triangles are tested for each point, the
 As shown, this has a minor performance gain for the tested mesh files, but almost no impact for random generated triangles, as there are no shared triangles between all points.
 
 x...  mode with stored triangle center
+
 o...  mode with stored corner points
+
 +c... cache enabled
 
-| triangles        | raycast x (msvc)       | bruteforce x (msvc)          | raycast o (msvc)       | raycast o+c (msvc)       | bruteforce o (msvc)          | bruteforce o+c (msvc)          |
+
+msvc++
+
+| triangles        | raycast x       | bruteforce x          | raycast o       | raycast o+c       | bruteforce o          | bruteforce o+c           |
 | ------------- |:-------------:|:-----:|:-----:|:-----:|:-------------:| -----:|
-|    10.000      | | | 647 | 692 | | |
-|   100.000      | | | 3036| 3290 | | |
-| 1.000.000      | | | 13526| 24444 | | |
-| sphere         | | | 27 | 21 | | |
-| monkey         | | | 37 | 31 | | |
-| noobPot        | | | 334 | 230 | | |
+|    10.000      | 39 | 1053 | 647 | 692 | 132 | 4184 |
+|   100.000      | 74 | 20545 | 3036| 3290 | 326 | 56003 |
+| 1.000.000      | 709 | 213203| 13526| 24444 | 3083 | 661706 |
+| sphere         | 31 | 33 | 27 | 21 | 28 | 72 |
+| monkey         | 28 | 52 | 37 | 31 | 63 | 153 |
+| noobPot        | 243 | 613 | 334 | 230 | 270 | 1064|
+
+gcc
+%TODO%
 
 
 ### misc (TODO)
