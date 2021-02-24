@@ -285,7 +285,7 @@ void KDTree::raycastNode (Node* node, const Triangle*& nearest_triangle, glm::ve
     }
 }
 
-const Triangle* KDTree::bruteforce (Ray ray) const
+const Triangle* KDTree::bruteforce (Ray ray)
 {
     #ifdef USE_CACHE
         _rayId++;
@@ -309,7 +309,7 @@ const Triangle* KDTree::bruteforce (Ray ray) const
         q.pop();
 
     #ifdef SAVE_CORNERS
-        for (const Triangle* triangle : cur->pt->triangles)
+        for (Triangle* triangle : cur->pt->triangles)
         {
             #ifdef USE_CACHE
                 if (triangle->idxRay == _rayId) continue;
