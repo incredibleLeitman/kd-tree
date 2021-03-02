@@ -5,7 +5,6 @@
 #include "pointGenerator.h"
 
 #include <cstring> // stoi
-#include <iostream>
 #include <chrono>
 
 void raycast (KDTree& tree, Ray& ray)

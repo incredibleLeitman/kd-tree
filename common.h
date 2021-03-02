@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 #include <string>
 #include <vector>
+#include <iostream>
 
 // --------------------------------------------------------------------------------
 // Considerations...
@@ -40,8 +41,8 @@
 //#define DEBUG_OUTPUT          // prints debug output
 #define MAX_DEPTH 500           // sets maximum depth for kd-tree nodes
 #define MAX_DIM 100             // maximum dimension for scene extent
-#define SAVE_TRIANGLES        // kd-tree stores the center of each triangle as point
-//#define SAVE_CORNERS            // kd-tree stores each corner point of each triangle
+//#define SAVE_TRIANGLES        // kd-tree stores the center of each triangle as point
+#define SAVE_CORNERS            // kd-tree stores each corner point of each triangle
 #define EPSILON 0.0000001       // minimum allowed difference for points to determine equality
 #define USE_FIRST_AXIS          // if set, takes the first splitting axis more have the same extent
 //#define USE_CACHE               // marks triangles as checked (for corner store mode)
@@ -75,12 +76,42 @@ static std::string AxisToString (const Axis axis)
     return s;
 }
 
+template<unsigned int I>
+struct scalar_swizzle
+{
+    float v[1];
+
+    float& operator = (const float x)
+    {
+        v[I] = x;
+        return v[I];
+    }
+
+    operator float () const
+    {
+        return v[I];
+    }
+};
+
+template<typename vec_type, unsigned int A, unsigned int B, unsigned int C>
+struct vec3_swizzle
+{
+    float d[3];
+
+    vec_type operator = (const vec_type& vec)
+    {
+        return vec_type(d[A] = vec.dim(A), d[B] = vec.dim(B), d[C] = vec.dim(C));
+    }
+
+    operator vec_type ()
+    {
+        return vec_type(d[A], d[B], d[C]);
+    }
+};
+
 // stores 3d points
 class Point
 {
-private:
-    float coords[3];
-
 public:
     Point (float coords[3]) : coords{ coords[0], coords[1], coords[2] }
     {
@@ -90,9 +121,18 @@ public:
     {
     }
 
+    union
+    {
+        float coords[3];
+        scalar_swizzle<0> x;
+        scalar_swizzle<1> y;
+        scalar_swizzle<2> z;
+        vec3_swizzle<Point, 0, 1, 2> xyz;
+    };
+
     // overload access operator to allow provide axis
-    float operator[](Axis i) const { return coords[(int)i]; }
-    const float& operator[](Axis i) { return coords[(int)i]; }
+    float operator [] (Axis i) const { return coords[(int)i]; }
+    const float& operator [] (Axis i) { return coords[(int)i]; }
 
     // operator for value comparison
     bool operator != (const Point& rhs) { return coords[0] != rhs.coords[0] || coords[1] != rhs.coords[1] || coords[2] != rhs.coords[2]; }
@@ -108,6 +148,12 @@ public:
         return std::to_string(dim(X)) + ", " +
                std::to_string(dim(Y)) + ", " +
                std::to_string(dim(Z));
+    }
+
+    friend std::ostream& operator << (std::ostream& output, const Point& pt)
+    {
+        output << pt.coords[0] << ", " << pt.coords[1] << ", " << pt.coords[2];
+        return output;
     }
 
     glm::vec3 toVec3 () const
